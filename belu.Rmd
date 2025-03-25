@@ -351,6 +351,7 @@ xval = 10: Determina que la validación cruzada interna para el proceso de poda 
 
 # **4. Evaluación del árbol de decisión básico** 
 
+Se construye una matriz de confusión para analizar el rendimiento del modelo de clasificación. Inicialmente, se determina el número de predicciones positivas y negativas en el conjunto de prueba. A continuación, se define la función gen_m_c, que recibe como parámetros las etiquetas reales y las predicciones del modelo.Finalmente, los valores de la matriz se ajustan para representar la proporción de aciertos y errores, obteniendo así una versión normalizada de la matriz de confusión.
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Realizar predicciones en el conjunto de testeo
 predicciones_prob <- predict(tree, newdata = test_data, type = "prob")
@@ -365,17 +366,90 @@ head(predicciones_clase)
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 library(pROC)        # Para calcular AUC-ROC
+library(pheatmap)
+library(gridExtra)
+library(grid)
 
-# 3. MATRIZ DE CONFUSIÓN
-
+# Crear matriz de confusión
 matriz_conf <- confusionMatrix(predicciones_clase, as.factor(test_data$loan_status))
-# Muestro los valores de la matriz de confusión en porcentajes
+
+# Normalizar la matriz en porcentajes
 total <- sum(matriz_conf$table)
-matriz_conf$table[1,1] <- (matriz_conf$table[1,1]/ total) * 100  
-matriz_conf$table[1,2] <- (matriz_conf$table[1,2]/ total) * 100  
-matriz_conf$table[2,1] <- (matriz_conf$table[2,1]/ total) * 100   
-matriz_conf$table[2,2] <- (matriz_conf$table[2,2]/ total) * 100  
-print(matriz_conf)
+matriz_conf$table <- (matriz_conf$table / total) * 100  
+gen_m_c = function(matriz_conf, filename = NULL) {
+  # Crear el heatmap sin imprimir automáticamente
+  p <- pheatmap(matriz_conf, 
+                display_numbers = TRUE,
+                color = colorRampPalette(c("coral", "gold"))(50),
+                main = "Confusion Matrix",
+                number_format = "%.2f",
+                cluster_rows = FALSE,
+                cluster_cols = FALSE,
+                legend = TRUE,  
+                fontsize = 12,       
+                fontsize_number = 12, 
+                cellwidth = 60,       
+                cellheight = 60,
+                silent = TRUE)  # Evita que `pheatmap` imprima automáticamente
+
+  # Crear un título debajo del heatmap
+  title <- textGrob("Matriz de Confusión Normalizada", gp = gpar(fontsize = 14, fontface = "bold"))
+
+  # Combinar heatmap y título en un solo gráfico
+  grid.newpage() # Crear una nueva página para evitar superposición
+  grid.draw(p$gtable)  # Dibujar solo una vez
+  grid.text("Matriz de Confusión Normalizada", y = unit(0.02, "npc"), gp = gpar(fontsize = 14, fontface = "bold"))
+
+  # Guardar la imagen si se especifica un filename
+  if (!is.null(filename)) {
+    ggsave(filename, plot = p$gtable, width = 6, height = 6)
+  }
+}
+
+# Llamar a la función con la matriz corregida
+gen_m_c(matriz_conf$table, filename = "matriz_confusion.png")
+
+
+```
+
+```{r, warning=FALSE, message=FALSE}
+library(caret)
+
+# Suponiendo que tienes las predicciones y el conjunto de datos de test
+# Confusión matriz
+matriz_conf <- confusionMatrix(predicciones_clase, as.factor(test_data$loan_status))
+
+# Extraer los valores de la matriz de confusión
+TP <- matriz_conf$table[1, 1]  # Verdaderos positivos
+TN <- matriz_conf$table[2, 2]  # Verdaderos negativos
+FP <- matriz_conf$table[1, 2]  # Falsos positivos
+FN <- matriz_conf$table[2, 1]  # Falsos negativos
+
+# Calcular las proporciones
+total <- sum(matriz_conf$table)
+
+TP_prop <- TP / total * 100  # Proporción de TP
+TN_prop <- TN / total * 100  # Proporción de TN
+FP_prop <- FP / total * 100  # Proporción de FP
+FN_prop <- FN / total * 100  # Proporción de FN
+
+# Crear texto con las métricas enumeradas
+texto_resultado <- paste(
+  "En la matriz de confusión podemos observar:\n",
+  "1. *TP* (Verdaderos Positivos): ", round(TP_prop, 2), "% - Proporción de verdaderos positivos en relación con el total de verdaderos positivos.\n",
+  "2. *TN* (Verdaderos Negativos): ", round(TN_prop, 2), "% - Proporción de verdaderos negativos en relación con el total de verdaderos negativos.\n",
+  "3. *FP* (Falsos Positivos): ", round(FP_prop, 2), "% - Proporción de falsos positivos en relación con el total de verdaderos negativos.\n",
+  "4. *FN* (Falsos Negativos): ", round(FN_prop, 2), "% - Proporción de falsos negativos en relación con el total de verdaderos positivos.\n",
+  sep = ""
+)
+
+# Imprimir el texto
+cat(texto_resultado)
+
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 
 # 4. CALCULAR MÉTRICAS DE PERFORMANCE
 accuracy <- matriz_conf$overall["Accuracy"]
