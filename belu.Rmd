@@ -128,6 +128,7 @@ hist(loan_data$log_cb_person_cred_hist_length,
 par(mfrow=c(1,1))
 
 ```
+\newpage
 
 ## **Distribución de Variables Categóricas**
 
@@ -164,26 +165,7 @@ library(patchwork)
 ```
 
 
-##**Anomalías** 
-
-```{r, echo=FALSE, warning=FALSE, fig.cap="Distribución de Edades Mayores a 90",  message=FALSE}
-data <- read.csv("loan_data.csv")
-  ages_over_90 <- data$person_age[data$person_age > 90]
-  age_counts_over_90 <- table(ages_over_90)
-  
-  barplot(age_counts_over_90, 
-          main = "Frecuencia de Edades Mayores a 90",
-          xlab = "Edad", 
-          ylab = "Frecuencia", 
-          col = "lightblue", 
-          border = "black", 
-          las = 2, 
-          cex.names = 0.7, 
-          space = 1 )  
-
-```
-  
-
+## **Anomalías** 
 
 ```{r, echo=FALSE, warning=FALSE, fig.cap="Boxplots de Experiencia Laboral y Edad", message=FALSE}
 par(mfrow = c(1, 2))  # 1 fila y 2 columnas
@@ -204,19 +186,12 @@ par(mfrow = c(1, 2))  # 1 fila y 2 columnas
           border = "black", 
           horizontal = FALSE)  # gráfico vertical
   
-  # Mostrar personas con edad = 144
-personas_144 <- loan_data %>% 
-  filter(person_age == 144) %>%
-  select(person_age, person_gender, person_education, person_income, person_emp_exp)
-personas_144
 ```
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-anomalias_exp_mayor_edad <- sum(loan_data$person_emp_exp > loan_data$person_age, na.rm = TRUE)
+En el análisis preliminar de este conjunto de datos, se han identificado algunos valores atípicos (outliers) en los atributos de "Edad" (como personas con más de 120 años) y "Experiencia Laboral" (casos donde había más de 100 años de experiencia laboral). Sin embargo, su cantidad es chica (7 casos en un total de 45,000), lo que sugiere que no tendrán un impacto significativo en el entrenamiento del modelo. También, la distribución de la media en ambos Boxplots es bastante concentrada, lo que indica que la presencia de estos outliers no afecta la distribución general de los datos. En resumen, debido a que su número es tan pequeño, su impacto es prácticamente nulo, por lo que no es necesario eliminar estas filas. 
 
-# Mostrar el resultado
-cat("Cantidad de personas con experiencia laboral mayor a su edad:", anomalias_exp_mayor_edad, "\n")
-```
+
+Como resultado de los análisis realizados, no se eliminará ninguna información del conjunto de datos para evitar introducir sesgos en el proceso.
 
 ## **Chequeo de datos balanceados** 
 
@@ -259,9 +234,6 @@ Sin embargo, decidimos no intervenir en el conjunto de datos eliminando registro
 
 
 # **3. Construcción de árbol de decisión básico**
-
-
-
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
@@ -352,16 +324,22 @@ xval = 10: Determina que la validación cruzada interna para el proceso de poda 
 # **4. Evaluación del árbol de decisión básico** 
 
 Se construye una matriz de confusión para analizar el rendimiento del modelo de clasificación. Inicialmente, se determina el número de predicciones positivas y negativas en el conjunto de prueba. A continuación, se define la función gen_m_c, que recibe como parámetros las etiquetas reales y las predicciones del modelo.Finalmente, los valores de la matriz se ajustan para representar la proporción de aciertos y errores, obteniendo así una versión normalizada de la matriz de confusión.
+
+1. *TP* (Verdaderos Positivos): 75.7% 
+2. *TN* (Verdaderos Negativos): 15.26% 
+3. *FP* (Falsos Positivos): 6.98%
+4. *FN* (Falsos Negativos): 2.06% 
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Realizar predicciones en el conjunto de testeo
 predicciones_prob <- predict(tree, newdata = test_data, type = "prob")
 predicciones_clase <- predict(tree, newdata = test_data, type = "class")
 
 # Ver las probabilidades predichas
-head(predicciones_prob)
+# head(predicciones_prob)
 
 # Ver las clases predichas
-head(predicciones_clase)
+# head(predicciones_clase)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
@@ -412,7 +390,7 @@ gen_m_c(matriz_conf$table, filename = "matriz_confusion.png")
 
 ```
 
-```{r, warning=FALSE, message=FALSE}
+```{r, echo= FALSE, warning=FALSE, message=FALSE}
 library(caret)
 
 # Suponiendo que tienes las predicciones y el conjunto de datos de test
@@ -433,20 +411,24 @@ TN_prop <- TN / total * 100  # Proporción de TN
 FP_prop <- FP / total * 100  # Proporción de FP
 FN_prop <- FN / total * 100  # Proporción de FN
 
-# Crear texto con las métricas enumeradas
-texto_resultado <- paste(
-  "En la matriz de confusión podemos observar:\n",
-  "1. *TP* (Verdaderos Positivos): ", round(TP_prop, 2), "% - Proporción de verdaderos positivos en relación con el total de verdaderos positivos.\n",
-  "2. *TN* (Verdaderos Negativos): ", round(TN_prop, 2), "% - Proporción de verdaderos negativos en relación con el total de verdaderos negativos.\n",
-  "3. *FP* (Falsos Positivos): ", round(FP_prop, 2), "% - Proporción de falsos positivos en relación con el total de verdaderos negativos.\n",
-  "4. *FN* (Falsos Negativos): ", round(FN_prop, 2), "% - Proporción de falsos negativos en relación con el total de verdaderos positivos.\n",
-  sep = ""
-)
-
-# Imprimir el texto
-cat(texto_resultado)
-
 ```
+
+Los resultados obtenidos de las métricas de evaluación se detallan a continuación:
+
+1. **Accuracy (Precisión Global)**: 0.9096
+   - Esto significa que el modelo clasificó correctamente el 90.96% de todas las instancias en el conjunto de datos (tanto positivas como negativas). 
+
+2. **Precision (Precisión)**: 0.9156
+   - Este valor indica que, de todas las predicciones que el modelo identificó como positivas (FP and TP), el 91.56% fueron efectivamente positivas. Como es un valor alto de precisión, esto significa que hay pocos falsos positivos.
+
+3. **Recall (Sensibilidad o Exhaustividad)**: 0.9735
+   -  Esto significa que el modelo fue capaz de identificar correctamente el 97.35% de todas las instancias positivas reales (FN y TP) en el conjunto de datos. Como es un valor alto de recall, esto significa que el modelo tiene una buena capacidad para identificar casos positivos, aunque pueda tener algunos falsos positivos.
+
+4. **F1-score**: 0.9437
+   - El F1-score es 0.9437 y es el promedio ponderado de la precisión y el recall.Este valor es especialmente útil cuando hay un desbalance en las clases, ya que captura tanto la exactitud como la exhaustividad del modelo. Como es un F1-score alto, el modelo tiene un buen balance entre precisión y recall. Si precision y recall tienen valores similares, significa que el modelo no favorece en exceso una métrica sobre la otra, es decir, no sacrifica la detección de positivos (recall) ni la precisión en sus predicciones.
+
+5. **AUC-ROC**: 0.9415
+   - El AUC-ROC (Área bajo la curva ROC) es 0.9415, lo que indica un rendimiento muy bueno del modelo (es cercano a 1) ya que la curva ROC compara la tasa de verdaderos positivos con la tasa de falsos positivos.
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
@@ -458,10 +440,10 @@ recall <- matriz_conf$byClass["Recall"]
 f1_score <- matriz_conf$byClass["F1"]
 
 # Mostrar métricas
-cat("Accuracy:", accuracy, "\n")
-cat("Precision:", precision, "\n")
-cat("Recall:", recall, "\n")
-cat("F1-score:", f1_score, "\n")
+#cat("Accuracy:", accuracy, "\n")
+#cat("Precision:", precision, "\n")
+#cat("Recall:", recall, "\n")
+#cat("F1-score:", f1_score, "\n")
 
 # 5. CURVA ROC Y AUC
 roc_curve <- roc(test_data$loan_status, predicciones_prob[,2])  # Segunda columna = prob de clase positiva
@@ -472,4 +454,8 @@ cat("AUC-ROC:", auc_value, "\n")
 plot(roc_curve, col = "blue", main = "Curva ROC - Árbol de Decisión")
 ```
 
+En términos de la curva ROC que obtenemos, efectivamente mostramos que nuestro modelo cuenta con alta sensibilidad (True Positive Rate) y especificidad (False Positive Rate), corroborando el hecho de que la curva azul se aproxime a la esquina de la parte superior izquierda, donde el modelo clasificaría correctamente a muchos de los positivos y a los negativos. 
 
+Si dicha curva ocupase valores más próximos a la diagonal gris, significaría que el modelo no se comporta mejor que el de una clasificación aleatoria. En el caso ideal, donde el modelo es perfecto, tendríamos la curva pegada a los ejes, de forma que obtendríamos una AUC de 1, es decir, la curva podría ir hacia el destino óptimo de manera lineal. 
+
+Además, la curva ROC en los datos de test indica que el modelo mantiene un buen desempeño fuera de los datos de entrenamiento, lo que sugiere que no está sobreajustado. Si el modelo estuviera fuertemente sobreajustado, esperaríamos una alta performance en entrenamiento pero un deterioro significativo en test. Dado que la curva en test sigue mostrando una buena separación entre clases, se puede inferir que el modelo generaliza correctamente. En la siguiente parte, veremos cómo para mejorar el rendimiento de este modelo se podrían buscar mejores hiperparámetros que los default.
