@@ -1,15 +1,31 @@
 ---
-title: "TDVI_TP1"
 output: pdf_document
-date: "2025-03-23"
 ---
 
-# Trábajo Práctico 1 
+\newpage
+\begin{titlepage}
+  \centering
+  \vspace*{1cm}
+  
+  {\Huge \textbf{TD VI: Inteligencia Artificial}}\\[0.5cm]
+  
+  {\Large \textbf{Trabajo Práctico I}}\\[0.5cm]
+  
+  {\large \textbf{Universidad Torcuato Di Tella}}\\[1.5cm]
+  
+  {\Large \textbf{Participantes:}}\\[0.5cm]
+  
+  {\Large Catalina Brusco, Catalina Chab López y Belén Chen}\\[0.5cm]
+  
+  \vfill
+  
+  {\Large Fecha: Abril del 2025}\\[0.5cm]
+\end{titlepage}
 
-## 1. Introduccion al problema: origen y variables principales del conjunto de datos
+# **1. Introducción al problema: origen y variables principales del conjunto de datos**
 
 
-El conjunto de datos elegido proviene de Kaggle y se utiliza para predecir si un prestamo solicitado por una persona sera aprobado o rechazado, basandose en distintas caracteristicas del solicitante.El conjunto fue enriquecido con variables adicionales basadas en *Riesgo Financiero* para la Aprobación de Préstamos. Además, se aplicó *SMOTENC (Synthetic Minority Over-sampling Technique for Nominal and Continuous)* para generar nuevos puntos de datos y ampliar el conjunto de instancias. El conjunto de datos contiene 45,000 registros y 14 variables. A continuación se describen las variables clave:
+El conjunto de datos elegido proviene de Kaggle y se utiliza para predecir si un préstamo solicitado por una persona será aprobado o rechazado, basándose en distintas características del solicitante. El conjunto fue enriquecido con variables adicionales basadas en *Riesgo Financiero* para la Aprobación de Préstamos. Además, se aplicó *SMOTENC (Synthetic Minority Over-sampling Technique for Nominal and Continuous)* para generar nuevos puntos de datos y ampliar el conjunto de instancias. El conjunto de datos contiene 45,000 registros y 14 variables. A continuación se describen las variables clave:
 
 ```{r, echo=FALSE, warning=FALSE,  message=FALSE}
 library(knitr)
@@ -43,7 +59,7 @@ kable(tabla, format = "latex", booktabs = TRUE, align = "l",
 
 Utilizar un árbol de decisión para modelar este problema es adecuado por varias razones. Primero, permite realizar tareas de clasificación binaria, como predecir si un préstamo será aprobado o rechazado, ya que divide los datos en función de las características más importantes. Segundo, maneja eficientemente datos mixtos, es decir, tanto numéricos (como ingresos y puntajes de crédito) como categóricos (como género y estado civil), sin necesidad de transformaciones complicadas. Tercero, la estructura de un árbol de decisión permite dividir los datos en subgrupos homogéneos, lo que ayuda a identificar clientes con características similares que pueden tener un comportamiento parecido, como los que tienen un puntaje de crédito bajo o altos ingresos. Esto es importante porque las relaciones entre características, como ingresos y puntaje de crédito, no siempre son lineales, y los árboles pueden manejar estas interacciones. Finalmente, su gran ventaja es la interpretabilidad; los árboles de decisión son fáciles de entender y explican claramente las razones detrás de cada clasificación, lo cual es fundamental en el ámbito bancario, donde se necesitan justificar las decisiones de aprobación o rechazo de préstamos.
 
-## 2. Preparación de los datos
+# **2. Preparación de los datos**
 
 Es necesario preprocesar los datos, para lo cual realizaremos un análisis que incluya la verificación de las variables y su clasificación, la normalización o escalado de las variables, la detección de valores faltantes, la identificación de posibles anomalías y balanceado de datos.
 
@@ -69,19 +85,17 @@ kable(tabla_resumen, align = "c", caption = "Resumen de valores nulos")
 
 También corroboramos que no huebiese una cantidad excesiva de filas repetidas, de hecho, nos dió cero.
 
-```{r}
+```{r, echo=FALSE}
 duplicados<-duplicated(data)
 cant<-sum(duplicados)
-cant
 ```
 
 
-
-Habiendo mencionado lo anterior, continuaremos con el análisis de las distribuciones de los distintos atributos. Como se puede observar en el gráfico XX, se aplicó una transformación logarítmica a tres atributos clave: Edad, Ingresos e Historial de Crédito. Esta transformación es relevante porque, al ser creciente, no altera la distribución subyacente de los datos, pero sí comprime el rango de los valores grandes y expande el de los valores pequeños, lo que facilita su análisis.
+Habiendo mencionado lo anterior, continuaremos con el análisis de las distribuciones de los distintos atributos. Como se puede observar en la Figura 1, se aplicó una transformación logarítmica a tres atributos clave: Edad, Ingresos e Historial de Crédito. Esta transformación es relevante porque, al ser creciente, no altera la distribución subyacente de los datos, pero sí comprime el rango de los valores grandes y expande el de los valores pequeños, lo que facilita su análisis.
 
 Es importante destacar la relevancia de analizar la distribución de cada atributo. En este caso, observamos que atributos como Edad, Monto del Préstamo e Ingresos presentan una distribución sesgada a la derecha, mientras que el Puntaje de Crédito está sesgado a la izquierda. Esta asimetría podría generar predicciones erróneas para los valores extremos en cada uno de estos atributos. Además, notamos que el Historial de Crédito no sigue una distribución bien definida, lo que añade complejidad a su análisis.
 
-### Distribución de Variables Numéricas
+## **Distribución de Variables Numéricas**
 
 ```{r, echo=FALSE, warning=FALSE, fig.cap="Distribución de Variables Numéricas",  message=FALSE}
 loan_data <- data
@@ -115,7 +129,7 @@ par(mfrow=c(1,1))
 
 ```
 
-### Distribución de Variables Categóricas
+## **Distribución de Variables Categóricas**
 
 Luego de analizar la distribución de las variables categóricas, no se identifican patrones relevantes ni desequilibrios significativos que requieran mención.
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=14, fig.height=8}
@@ -150,7 +164,7 @@ library(patchwork)
 ```
 
 
-### Anomalías 
+##**Anomalías** 
 
 ```{r, echo=FALSE, warning=FALSE, fig.cap="Distribución de Edades Mayores a 90",  message=FALSE}
 data <- read.csv("loan_data.csv")
@@ -191,7 +205,9 @@ par(mfrow = c(1, 2))  # 1 fila y 2 columnas
           horizontal = FALSE)  # gráfico vertical
   
   # Mostrar personas con edad = 144
-personas_144 <- loan_data %>% filter(person_age == 144)
+personas_144 <- loan_data %>% 
+  filter(person_age == 144) %>%
+  select(person_age, person_gender, person_education, person_income, person_emp_exp)
 personas_144
 ```
 
@@ -202,7 +218,7 @@ anomalias_exp_mayor_edad <- sum(loan_data$person_emp_exp > loan_data$person_age,
 cat("Cantidad de personas con experiencia laboral mayor a su edad:", anomalias_exp_mayor_edad, "\n")
 ```
 
-### Chequeo de datos balanceados 
+## **Chequeo de datos balanceados** 
 
 Para evaluar el balance de nuestro conjunto de datos, analizamos las proporciones de las categorías de la variable de interés, en este caso, el estado del préstamo (aceptado o rechazado). A continuación, creamos un gráfico de barras que muestra la proporción de "Aceptado" y "Rechazado" en el conjunto de datos.
   
@@ -242,13 +258,13 @@ La desproporción en el conjunto de datos podría generar un sesgo hacia la clas
 Sin embargo, decidimos no intervenir en el conjunto de datos eliminando registros o utilizando técnicas de balanceo como sobremuestreo o submuestreo. Esto se debe a que tales técnicas podrían introducir sesgos adicionales o alterar la representatividad del conjunto de datos. En cambio, optamos por mantener la estructura original y tener en cuenta las proporciones de las clases al entrenar, validar y evaluar el modelo.
 
 
-## 3. Construcción de árbol de decisión básico
+# **3. Construcción de árbol de decisión básico**
 
 
 
 
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 
 library(caret)
 library(rpart)
@@ -272,14 +288,14 @@ val_data <- remaining[val_index, ]
 test_data <- remaining[-val_index, ]
 
 # Verificar la distribución de loan_status en cada conjunto
-prop.table(table(train_data$loan_status))  # Proporción en entrenamiento
-prop.table(table(val_data$loan_status))    # Proporción en validación
-prop.table(table(test_data$loan_status))   # Proporción en testeo
+#prop.table(table(train_data$loan_status))  # Proporción en entrenamiento
+#prop.table(table(val_data$loan_status))    # Proporción en validación
+#prop.table(table(test_data$loan_status))   # Proporción en testeo
 
 # Imprimir tamaños
-cat("Tamaño de Entrenamiento:", nrow(train_data), "\n")
-cat("Tamaño de Validación:", nrow(val_data), "\n")
-cat("Tamaño de Testeo:", nrow(test_data), "\n")
+#cat("Tamaño de Entrenamiento:", nrow(train_data), "\n")
+#cat("Tamaño de Validación:", nrow(val_data), "\n")
+#cat("Tamaño de Testeo:", nrow(test_data), "\n")
 
 
 
@@ -287,26 +303,28 @@ tree <- rpart(formula = loan_status ~ person_age + person_gender + person_educat
               data = train_data, 
               method = "class")
 
-rpart.plot(tree, main = "Árbol de Decisión", type = 2, extra = 104)
+```
 
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Árbol de Decisión del Modelo"}
+rpart.plot(tree, main = "Árbol de Decisión", type = 2, extra = 104)
 
 ```
 
-Al realizar el análisis, mantuvimos la proporción de otorgamiento de préstamos (78%) y rechazo (22%) a lo largo de las etapas de entrenamiento, validación y testeo. En la descripción del árbol de decisión, observamos que cada nodo se compone de tres filas:
+Al realizar el análisis, mantuvimos la proporción de otorgamiento de préstamos (22%) y rechazo (78%) a lo largo de las etapas de entrenamiento, validación y testeo. En la descripción del árbol de decisión, observamos que cada nodo se compone de tres filas:
 
-La primera fila indica la categoría de "no" (rechazo del préstamo).
+1.La primera fila indica la categoría de "no" (rechazo del préstamo).
 
-La segunda fila muestra la proporción de casos dentro del subgrupo.
+2.La segunda fila muestra la proporción de casos dentro del subgrupo.
 
-La tercera fila indica cuántos datos se concentran en ese nivel del árbol.
+3.La tercera fila indica cuántos datos se concentran en ese nivel del árbol.
 
 El árbol de decisión muestra que el primer factor que se utiliza para determinar si se le otorga un préstamo es la existencia de defaults previos (previous_loan_defaults_on_file), donde la presencia de antecedentes implica una altísima probabilidad de no pago. En ausencia de defaults, el siguiente factor relevante es la relación entre el monto solicitado y el ingreso (loan_percent_income), siendo los valores altos indicativos de mayor riesgo. Además, la tasa de interés del préstamo (loan_int_rate) cumple un rol clave: tasas superiores al 14% incrementan significativamente la probabilidad de incumplimiento. El nivel de ingresos (person_income) también influye, ya que a menor ingreso, el riesgo aumenta, especialmente combinado con tasas altas. La intención del préstamo (loan_intent), cuando es para educación, fines personales o emprendimientos, aparece asociada a mayor riesgo. Finalmente, la tenencia de vivienda propia o bajo hipoteca (person_home_ownership) contribuye a elevar la probabilidad de default en combinación con tasas altas y un elevado porcentaje préstamo/ingreso. En conjunto, estas variables permiten identificar perfiles de alto riesgo de manera clara. 
 
 Como conclusión, utilizando esta instancia del modelo entrenado con el conjunto de datos train se le rechazaría al 83% el préstamo y al resto se le otorgaría. 
 
-### Hiperprámetros por defecto del árbol
+## **Hiperprámetros por defecto del árbol**
 
-```{r}
+```{r, echo=FALSE, results="hide"}
 tree$control
 ```
 
@@ -331,7 +349,7 @@ maxdepth = 30: Fija la profundidad máxima que puede alcanzar el árbol. Un valo
 xval = 10: Determina que la validación cruzada interna para el proceso de poda se realice en 10 particiones, aportando mayor robustez a la selección del tamaño óptimo del árbol.
 
 
-## 4. Evaluación del árbol de decisión básico 
+# **4. Evaluación del árbol de decisión básico** 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Realizar predicciones en el conjunto de testeo
