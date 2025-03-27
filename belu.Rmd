@@ -488,12 +488,24 @@ grid_search <- function(train, validation){
 
 res <- grid_search(train_data, val_data)
 
-# 
-# modelo2 <- rpart(formula = train_data$loan_status ~ ., data = train_data, method = "class",
-#       control = rpart.control(maxdepth = res[0], minsplit = res[1], minbucket = res[2], cp = 0, xval = 0))
-# predicciones_modelo2 <- predict(modelo2, newdata = test_data, type = "prob")
-# roc_curve2 <- roc(test_data$loan_status, predicciones_modelo2[,2])
-# auc_value2 <- auc(roc_curve)
 
+
+modelo2 <- rpart(formula = train_data$loan_status ~ ., data = train_data, method = "class",
+      control = rpart.control(maxdepth = res$maxdepth_value, minsplit = res$minsplit_value, minbucket = res$minbucket_value, cp = 0, xval = 0))
+predicciones_modelo2 <- predict(modelo2, newdata = test_data, type = "prob")
+roc_curve2 <- roc(test_data$loan_status, predicciones_modelo2[,2])
+auc_value2 <- auc(roc_curve)
+
+cat("Mejores Hiperparámetros:\n")
+print(res)
+
+cat("Hiperparámetros default:\n")
+print(tree$control)
+
+cat("\nValores de AUC de arbol con hiperparametros default:\n")
+print(auc_value)
+
+cat("\nValores de AUC de arbol con mejores hiperparametros:\n")
+print(auc_value2)
 ```
 
