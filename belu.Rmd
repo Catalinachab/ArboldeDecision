@@ -464,9 +464,9 @@ Además, la curva ROC en los datos de test indica que el modelo mantiene un buen
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 library(caret)
 grid_search <- function(train, validation){
-  maxdepth_values  <- sample(5:30, 10)
-  minsplit_values  <- sample(2:20, 10) 
-  minbucket_values <- sample(1:10, 10)
+  maxdepth_values  <- sample(1:30, 10)
+  minsplit_values  <- sample(1:30, 10) 
+  minbucket_values <- sample(1:30, 10)
   
   paramgrid<- expand.grid( maxdepth_values, minsplit_values, minbucket_values)
   resultados<-data.frame(maxdepth_value = integer(), minsplit_value = integer(), minbucket_value = integer(), aucroc = numeric())
@@ -489,12 +489,11 @@ grid_search <- function(train, validation){
 res <- grid_search(train_data, val_data)
 
 
-
-modelo2 <- rpart(formula = train_data$loan_status ~ ., data = train_data, method = "class",
+modelo2 <- rpart(formula =loan_status ~ ., data = train_data, method = "class",
       control = rpart.control(maxdepth = res$maxdepth_value, minsplit = res$minsplit_value, minbucket = res$minbucket_value, cp = 0, xval = 0))
 predicciones_modelo2 <- predict(modelo2, newdata = test_data, type = "prob")
 roc_curve2 <- roc(test_data$loan_status, predicciones_modelo2[,2])
-auc_value2 <- auc(roc_curve)
+auc_value2 <- auc(roc_curve2)
 
 cat("Mejores Hiperparámetros:\n")
 print(res)
