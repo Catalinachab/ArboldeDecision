@@ -370,13 +370,10 @@ gen_m_c = function(matriz_conf, filename = NULL) {
                 cellheight = 60,
                 silent = TRUE)  # Evita que `pheatmap` imprima automáticamente
 
-  # Crear un título debajo del heatmap
-  title <- textGrob("Matriz de Confusión Normalizada", gp = gpar(fontsize = 14, fontface = "bold"))
 
   # Combinar heatmap y título en un solo gráfico
   grid.newpage() # Crear una nueva página para evitar superposición
   grid.draw(p$gtable)  # Dibujar solo una vez
-  grid.text("Matriz de Confusión Normalizada", y = unit(0.02, "npc"), gp = gpar(fontsize = 14, fontface = "bold"))
 
   # Guardar la imagen si se especifica un filename
   if (!is.null(filename)) {
@@ -396,20 +393,13 @@ library(caret)
 # Suponiendo que tienes las predicciones y el conjunto de datos de test
 # Confusión matriz
 matriz_conf <- confusionMatrix(predicciones_clase, as.factor(test_data$loan_status))
-
-# Extraer los valores de la matriz de confusión
-TP <- matriz_conf$table[1, 1]  # Verdaderos positivos
-TN <- matriz_conf$table[2, 2]  # Verdaderos negativos
-FP <- matriz_conf$table[1, 2]  # Falsos positivos
-FN <- matriz_conf$table[2, 1]  # Falsos negativos
-
-# Calcular las proporciones
 total <- sum(matriz_conf$table)
 
-TP_prop <- TP / total * 100  # Proporción de TP
-TN_prop <- TN / total * 100  # Proporción de TN
-FP_prop <- FP / total * 100  # Proporción de FP
-FN_prop <- FN / total * 100  # Proporción de FN
+# Extraer los valores de la matriz de confusión y guardar los porcentajes que representan
+TP <- matriz_conf$table[1, 1] / total * 100 # Verdaderos positivos
+TN <- matriz_conf$table[2, 2] / total * 100 # Verdaderos negativos
+FP <- matriz_conf$table[1, 2] / total * 100 # Falsos positivos
+FN <- matriz_conf$table[2, 1] / total * 100 # Falsos negativos
 
 ```
 
@@ -437,7 +427,11 @@ Los resultados obtenidos de las métricas de evaluación se detallan a continuac
 accuracy <- matriz_conf$overall["Accuracy"]
 precision <- matriz_conf$byClass["Precision"]
 recall <- matriz_conf$byClass["Recall"]
-f1_score <- matriz_conf$byClass["F1"]
+calcular_f1_score = function(precision, recall) {
+  f1_score = (2*precision*recall)/(precision + recall)
+  print(sprintf("F1 score: %f", f1_score))
+}
+
 
 # Mostrar métricas
 #cat("Accuracy:", accuracy, "\n")
@@ -451,7 +445,11 @@ auc_value <- auc(roc_curve)
 cat("AUC-ROC:", auc_value, "\n")
 
 # 6. Graficar la Curva ROC
-plot(roc_curve, col = "blue", main = "Curva ROC - Árbol de Decisión")
+plot(roc_curve, col = "blue", main = "Figura 1: Curva ROC - Árbol de Decisión",
+     xlab = "False Positive Rate", ylab = "True Positive Rate")
+
+legend("bottomright", legend=c("ROC", "Random Classifier"), 
+       col=c("blue", "gray"), lty=c(1, 2), cex=0.8)
 ```
 
 En términos de la curva ROC que obtenemos, efectivamente mostramos que nuestro modelo cuenta con alta sensibilidad (True Positive Rate) y especificidad (False Positive Rate), corroborando el hecho de que la curva azul se aproxime a la esquina de la parte superior izquierda, donde el modelo clasificaría correctamente a muchos de los positivos y a los negativos. 
@@ -459,3 +457,43 @@ En términos de la curva ROC que obtenemos, efectivamente mostramos que nuestro 
 Si dicha curva ocupase valores más próximos a la diagonal gris, significaría que el modelo no se comporta mejor que el de una clasificación aleatoria. En el caso ideal, donde el modelo es perfecto, tendríamos la curva pegada a los ejes, de forma que obtendríamos una AUC de 1, es decir, la curva podría ir hacia el destino óptimo de manera lineal. 
 
 Además, la curva ROC en los datos de test indica que el modelo mantiene un buen desempeño fuera de los datos de entrenamiento, lo que sugiere que no está sobreajustado. Si el modelo estuviera fuertemente sobreajustado, esperaríamos una alta performance en entrenamiento pero un deterioro significativo en test. Dado que la curva en test sigue mostrando una buena separación entre clases, se puede inferir que el modelo generaliza correctamente. En la siguiente parte, veremos cómo para mejorar el rendimiento de este modelo se podrían buscar mejores hiperparámetros que los default.
+
+
+# **5. Optimización del modelo** 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(caret)
+grid_search <- function(train, validation){
+  maxdepth_values  <- sample(5:30, 10)
+  minsplit_values  <- sample(2:20, 10) 
+  minbucket_values <- sample(1:10, 10)
+  
+  paramgrid<- expand.grid( maxdepth_values, minsplit_values, minbucket_values)
+  resultados<-data.frame(maxdepth_value = integer(), minsplit_value = integer(), minbucket_value = integer(), aucroc = numeric())
+  
+  for(i in maxdepth_values){
+    for (j in minsplit_values ){
+      for (k in minbucket_values){
+      modelo <- rpart(formula = train$loan_status ~ ., data = train, method = "class", 
+      control = rpart.control(maxdepth = i, minsplit = j, minbucket = k, cp = 0, xval = 0))
+      predicciones_modelo <- predict(modelo, newdata = validation, type = "prob")
+      roc_curve <- roc(validation$loan_status, predicciones_modelo[,2])  
+      auc_value <- auc(roc_curve)
+      resultados<- rbind(resultados, data.frame(maxdepth_value =i, minsplit_value = j, minbucket_value = k, aucroc = auc_value))
+  }}}
+  mejores_hiper <- resultados[which.max(resultados$aucroc),]
+
+  return(mejores_hiper)
+}
+
+res <- grid_search(train_data, val_data)
+
+# 
+# modelo2 <- rpart(formula = train_data$loan_status ~ ., data = train_data, method = "class",
+#       control = rpart.control(maxdepth = res[0], minsplit = res[1], minbucket = res[2], cp = 0, xval = 0))
+# predicciones_modelo2 <- predict(modelo2, newdata = test_data, type = "prob")
+# roc_curve2 <- roc(test_data$loan_status, predicciones_modelo2[,2])
+# auc_value2 <- auc(roc_curve)
+
+```
+
