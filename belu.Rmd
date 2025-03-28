@@ -232,7 +232,7 @@ La desproporción en el conjunto de datos podría generar un sesgo hacia la clas
   
 Sin embargo, decidimos no intervenir en el conjunto de datos eliminando registros o utilizando técnicas de balanceo como sobremuestreo o submuestreo. Esto se debe a que tales técnicas podrían introducir sesgos adicionales o alterar la representatividad del conjunto de datos. En cambio, optamos por mantener la estructura original y tener en cuenta las proporciones de las clases al entrenar, validar y evaluar el modelo.
 
-
+\newpage
 # **3. Construcción de árbol de decisión básico**
 
 
@@ -348,8 +348,24 @@ library(pheatmap)
 library(gridExtra)
 library(grid)
 
+
+metricas_performance<- function(modelo, dataset){
+  
+  predicciones_clase <- predict(modelo, newdata = dataset, type = "class")
+  predicciones_prob <- predict(modelo, newdata = dataset, type = "prob")
+  conf_matrix <- confusionMatrix(predicciones_clase, as.factor(dataset$loan_status))
+  accuracy <- conf_matrix$overall["Accuracy"]
+  precision <- conf_matrix$byClass["Precision"]
+  recall <- conf_matrix$byClass["Recall"]
+  f1_score <- conf_matrix$byClass["F1"]
+  roc_curve <- roc(dataset$loan_status, predicciones_prob[,2]) 
+  auc_value <- auc(roc_curve)
+  res<- list(accuracy, precision, recall, f1_score, roc_curve, auc_value, conf_matrix)
+  return (res)
+}
 # Crear matriz de confusión
-matriz_conf <- confusionMatrix(predicciones_clase, as.factor(test_data$loan_status))
+metricas_modelo1 <- metricas_performance(tree, test_data)
+matriz_conf <- metricas_modelo1[[7]]
 
 # Normalizar la matriz en porcentajes
 total <- sum(matriz_conf$table)
@@ -424,25 +440,14 @@ Los resultados obtenidos de las métricas de evaluación se detallan a continuac
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 
 # 4. CALCULAR MÉTRICAS DE PERFORMANCE
-accuracy <- matriz_conf$overall["Accuracy"]
-precision <- matriz_conf$byClass["Precision"]
-recall <- matriz_conf$byClass["Recall"]
-calcular_f1_score = function(precision, recall) {
-  f1_score = (2*precision*recall)/(precision + recall)
-  print(sprintf("F1 score: %f", f1_score))
-}
 
+accuracy_modelo1 <- metricas_modelo1[[1]]
+precision_modelo1 <- metricas_modelo1[[2]]
+recall_modelo1 <- metricas_modelo1[[3]]
+f1_modelo1 <-metricas_modelo1[[4]]
+roc_curve<-metricas_modelo1[[5]]
+AUC_VALUE1 <- metricas_modelo1[[6]]
 
-# Mostrar métricas
-#cat("Accuracy:", accuracy, "\n")
-#cat("Precision:", precision, "\n")
-#cat("Recall:", recall, "\n")
-#cat("F1-score:", f1_score, "\n")
-
-# 5. CURVA ROC Y AUC
-roc_curve <- roc(test_data$loan_status, predicciones_prob[,2])  # Segunda columna = prob de clase positiva
-auc_value <- auc(roc_curve)
-cat("AUC-ROC:", auc_value, "\n")
 
 # 6. Graficar la Curva ROC
 plot(roc_curve, col = "blue", main = "Figura 1: Curva ROC - Árbol de Decisión",
@@ -474,37 +479,256 @@ grid_search <- function(train, validation){
   for(i in maxdepth_values){
     for (j in minsplit_values ){
       for (k in minbucket_values){
-      modelo <- rpart(formula = train$loan_status ~ ., data = train, method = "class", 
-      control = rpart.control(maxdepth = i, minsplit = j, minbucket = k, cp = 0, xval = 0))
-      predicciones_modelo <- predict(modelo, newdata = validation, type = "prob")
-      roc_curve <- roc(validation$loan_status, predicciones_modelo[,2])  
-      auc_value <- auc(roc_curve)
-      resultados<- rbind(resultados, data.frame(maxdepth_value =i, minsplit_value = j, minbucket_value = k, aucroc = auc_value))
+        if (j>=k){
+          modelo <- rpart(formula = train$loan_status ~ ., data = train, method = "class", 
+          control = rpart.control(maxdepth = i, minsplit = j, minbucket = k, cp = 0, xval = 0))
+          predicciones_modelo <- predict(modelo, newdata = validation, type = "prob")
+          roc_curve <- roc(validation$loan_status, predicciones_modelo[,2])  
+          auc_value <- auc(roc_curve)
+          resultados<- rbind(resultados, data.frame(maxdepth_value =i, minsplit_value = j, minbucket_value = k, aucroc = auc_value))
+        }
   }}}
   mejores_hiper <- resultados[which.max(resultados$aucroc),]
 
   return(mejores_hiper)
 }
 
+
 res <- grid_search(train_data, val_data)
 
 
-modelo2 <- rpart(formula =loan_status ~ ., data = train_data, method = "class",
-      control = rpart.control(maxdepth = res$maxdepth_value, minsplit = res$minsplit_value, minbucket = res$minbucket_value, cp = 0, xval = 0))
-predicciones_modelo2 <- predict(modelo2, newdata = test_data, type = "prob")
-roc_curve2 <- roc(test_data$loan_status, predicciones_modelo2[,2])
-auc_value2 <- auc(roc_curve2)
-
+# Imprimir resultados
 cat("Mejores Hiperparámetros:\n")
 print(res)
 
-cat("Hiperparámetros default:\n")
+cat("\nHiperparámetros default:\n")
 print(tree$control)
 
-cat("\nValores de AUC de arbol con hiperparametros default:\n")
-print(auc_value)
+# Definir las métricas de modelo2
 
-cat("\nValores de AUC de arbol con mejores hiperparametros:\n")
-print(auc_value2)
+modelo2 <- rpart(formula =loan_status ~ ., data = train_data, method = "class",
+      control = rpart.control(maxdepth = res$maxdepth_value, minsplit = res$minsplit_value, minbucket = res$minbucket_value, cp = 0, xval = 0))
+
+
+metricas_modelo2 <- metricas_performance(modelo2, test_data)
+accuracy_modelo2 <- metricas_modelo2[[1]]
+precision_modelo2 <- metricas_modelo2[[2]]
+recall_modelo2 <- metricas_modelo2[[3]]
+f1_modelo2 <-metricas_modelo2[[4]]
+roc_curve<-metricas_modelo2[[5]]
+AUC_VALUE2 <- metricas_modelo2[[6]]
+
+# Crear una tabla comparativa 1
+maxdepth2= res$maxdepth_value
+minsplit2 = res$minsplit_value
+minbucket2 = res$minbucket_value
+metricas_comparativa1 <- data.frame(
+  Parámetro = c("maxdepth", "minsplit", "minbucket"),
+  Modelo_1 = c(30, 20, 7), 
+  Modelo_2 = c(maxdepth2, minsplit2, minbucket2),  
+  Diferencia_Porcentual= c(((maxdepth2 - 30) / 30) * 100,  
+                 ((minsplit2 - 20) / 20) * 100, 
+                 ((minbucket2 - 7) / 7) * 100)   
+)
+
+# Crear una tabla comparativa 2
+metricas_comparativa2 <- data.frame(
+  Modelo_1 = c(accuracy_modelo1, precision_modelo1, recall_modelo1, f1_modelo1 ),
+  Modelo_2 = c(accuracy_modelo2, precision_modelo2, recall_modelo2, f1_modelo2),
+  Diferencia = c(accuracy_modelo2 - accuracy_modelo1, 
+                 precision_modelo2 - precision_modelo1,
+                 recall_modelo2 - recall_modelo1,
+                 f1_modelo2 - f1_modelo1)
+)
+
+# Imprimir la tabla
+kable(metricas_comparativa1, caption = "Comparativa de hiperparámetros entre los modelos 1 y 2")
+# Imprimir la tabla
+kable(metricas_comparativa2, caption = "Comparativa de métricas entre los modelos 1 y 2")
+```
+
+Inicialmente, el árbol por defecto tenía un AUC-ROC de 0.9415207. Para encontrar la mejor opción dentro de todas las exploradas, se minimizó el valor de AUC-ROC explorando los siguientes rangos de los parámetros: max_depth (1 a 30), min_split (1 a 30) y minbucket (1 a 30), estableciendo además cp = 0 y xval = 0, como indicaba la consigna. Como resultado, se obtuvo un árbol con un AUC-ROC de 0.9636. Esta mejora de 0.02207 se debió a la reducción de min_split de 20 a 16 y de max_depth de 30 a 17, mientras que minbucket fue el único parámetro que aumentó, pasando de 7 a 21 en comparación con el modelo por defecto.
+
+En la Tabla 4 se observa que el nuevo modelo muestra una mejora en términos de accuracy, precisión y F1, aunque presenta una ligera disminución en recall. El F1 score experimenta una leve mejora, lo que sugiere un buen equilibrio entre precisión y recall. Sin embargo, el modelo pierde algo de capacidad para identificar los casos en los que sería adecuado otorgar un préstamo a una persona capaz de pagarlo. En otras palabras, esto podría traducirse en una pérdida de oportunidades y de ganancia para la empresa, ya que podría haberse beneficiado al otorgar el préstamo a una persona confiable. A pesar de la disminución en recall, el Modelo 2 sigue siendo generalmente superior, y dicha reducción no parece ser crítica dentro del contexto del problema.
+
+
+# **6. Interpretación de resultados ** 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Árbol de Decisión del Modelo Optimizado"}
+rpart.plot(modelo2, main = "Árbol de Decisión", type = 2, extra = 104)
+
+```
+En el primer modelo, el valor predeterminado de minsplit era 20, lo que implicaba que, para hacer una partición, el modelo requería al menos 20 observaciones por nodo. Esto hacía que fuera más exigente y dificultaba la creación de particiones cuando había menos de 20 observaciones en un nodo. En el segundo modelo, esta exigencia se redujo a 15, lo que facilita la creación de particiones con menos observaciones, permitiendo una mayor granularidad y, por lo tanto, un modelo más detallado.
+
+En cuanto a la profundidad del árbol (maxdepth), el valor predeterminado de 30 era bastante alto. Aunque, al hacer las particiones, no era necesario que el árbol fuera tan profundo, y en el peor de los casos, el árbol solo alcanzaba una profundidad de 6 niveles. Sin embargo, en el segundo modelo, la profundidad máxima llegó a ser de 17 niveles, lo que indica que el modelo ahora es mucho más profundo y tiene más capacidad para capturar complejidades en los datos.
+
+Otro cambio relevante es el valor de minbucket, que en el modelo predeterminado estaba fijado en 7. Esto implicaba que cada hoja terminal del árbol debía tener al menos 7 observaciones. Este valor más alto resultaba en menos hojas, ya que el modelo agrupaba más observaciones en cada hoja. En el segundo modelo, al reducirse a 21, ahora es más probable que el modelo tenga más hojas, ya que cada hoja puede contener más divisiones con menos observaciones, lo que permite una mayor ramificación y más especificidad en las predicciones.Nos llama la atención que es un valor menor al de minsplit, eso no debería de suceder. 
+
+Lo que notamos en el árbol resultante es que este ha aumentado considerablemente en tamaño. El modelo optimizado ahora tiene un árbol mucho más ramificado, lo que significa que ha aumentado la capacidad de aprendizaje. Este tipo de árbol es capaz de capturar patrones más complejos y matices en los datos, lo cual puede mejorar la precisión del modelo, pero también puede llevar a un mayor riesgo de sobreajuste si no se gestiona adecuadamente.
+
+```{r, echo=FALSE,  warning=FALSE, message=FALSE}
+library(dplyr)
+
+range = seq(2, 30, by = 2)
+
+res_depth <- data.frame(max_depth = integer(), auc = numeric())
+res_split <- data.frame(min_split = integer(), auc = numeric())
+res_bucket <- data.frame(min_bucket = integer(), auc = numeric())
+
+for(d in range){
+    modelo <- rpart(formula = train_data$loan_status ~ ., data = train_data, method = "class", 
+    # entreno con minsplit y minbucket fijos, cambio solo maxdepth
+    control = rpart.control(maxdepth = d, minsplit = res$minsplit_value, minbucket = res$minbucket_value, cp = 0, xval = 0))
+  
+    predicciones_modelo <- predict(modelo, newdata = val_data, type = "prob")
+    roc_curve <- roc(val_data$loan_status, predicciones_modelo[,2])  
+    auc_value <- as.numeric(auc(roc_curve))
+    res_depth <- rbind(res_depth, data.frame(max_depth = d, auc = auc_value))
+}
+for(s in range){
+  if(s>=res$minbucket_value){
+    modelo <- rpart(formula = train_data$loan_status ~ ., data = train_data, method = "class", 
+    # entreno con maxdepth y minbucket fijos, cambio solo minsplit
+    control = rpart.control(maxdepth = res$maxdepth_value, minsplit = s, minbucket = res$minbucket_value, cp = 0, xval = 0))
+  }
+    predicciones_modelo <- predict(modelo, newdata = val_data, type = "prob")
+    roc_curve <- roc(val_data$loan_status, predicciones_modelo[,2])  
+    auc_value <- as.numeric(auc(roc_curve))
+    res_split <- rbind(res_split, data.frame(min_split = s, auc = auc_value))
+}
+for(b in range){
+  if(b<=res$minsplit_value){
+    modelo <- rpart(formula = train_data$loan_status ~ ., data = train_data, method = "class", 
+    # entreno con maxdepth y minsplit fijos, cambio solo minbucket
+    control = rpart.control(maxdepth = res$maxdepth_value, minsplit = res$minsplit_value, minbucket = b, cp = 0, xval = 0))
+  }
+    predicciones_modelo <- predict(modelo, newdata = val_data, type = "prob")
+    roc_curve <- roc(val_data$loan_status, predicciones_modelo[,2])  
+    auc_value <- as.numeric(auc(roc_curve))
+    res_bucket <- rbind(res_bucket, data.frame(min_bucket = b, auc = auc_value))
+}
+
+# combino los df para graficarlos juntos
+res_depth <- res_depth %>% rename(value = max_depth) %>% mutate(hiperparametro = "max_depth")
+res_split <- res_split %>% rename(value = min_split) %>% mutate(hiperparametro = "min_split")
+res_bucket <- res_bucket %>% rename(value = min_bucket) %>% mutate(hiperparametro = "min_bucket")
+grafico <- bind_rows(res_depth, res_split, res_bucket)
+
+
+breaks_x <- seq(2, 30, by = 2)
+aucs_set <- sort(unique(grafico$auc))
+mascara <- c(TRUE, diff(aucs_set) >= 0.001)
+mascara[length(mascara)] <- TRUE
+breaks_y <- aucs_set[mascara]
+
+ggplot(grafico, aes(x = value, y = auc, color = hiperparametro)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  scale_y_continuous(breaks = breaks_y, labels = format(breaks_y, nsmall = 4)) +  
+  scale_x_continuous(breaks = breaks_x) +
+ labs(
+    title = "Impacto de max_depth, min_split y min_bucket sobre AUC",
+    x = "Valor del hiperparámetro",
+    y = "AUC",
+    color = "Hiperparámetro",
+    caption = "Nota: Para cada línea se evalúa cómo afecta el hiperparámetro correspondiente al color,\n
+    manteniendo los otros dos fijos. Además, se consideró que siempre se cumpla la restricción: min_split >= min_bucket."
+  ) + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(size = 6),
+        plot.caption = element_text(hjust = 0)
+  ) 
+
+
+```
+
+
+# **7. Análisis del impacto de los valores faltantes** 
+
+
+```{r, echo=FALSE,  warning=FALSE, message=FALSE}
+ponerNA<- function(porcentaje, dataset){
+dataNA <- dataset
+filas<- nrow(dataNA)
+columnas <- ncol(dataNA)
+cant <- filas*porcentaje/100
+for (colum in 1:columnas){
+
+  filas_a_reemp<-sample(1:filas, cant)
+
+  for (j in 1:cant){
+    fila<-filas_a_reemp[j]
+    dataNA[fila, colum] <-NA
+   }
+}
+return(dataNA)
+}
+# 20% NAN's
+
+train_veinteNA <- ponerNA(20, train_data)
+val_veinteNA <- ponerNA(20, val_data)
+test_veinteNA <- ponerNA(20, test_data)
+mej_hiper <- grid_search(train_veinteNA, val_veinteNA)
+
+modelo_veinteNA <- rpart(formula = train_veinteNA$loan_status ~ ., data = train_veinteNA, method = "class", control = rpart.control(maxdepth = mej_hiper$maxdepth_value, minsplit = mej_hiper$minsplit_value, minbucket = mej_hiper$minbucket_value, cp = 0, xval = 0))
+
+metricas_veinteNA <- metricas_performance(modelo_veinteNA, test_veinteNA)
+accuracy_veinteNA <- metricas_veinteNA[[1]]
+precision_veinteNA <- metricas_veinteNA[[2]]
+recall_veinteNA <- metricas_veinteNA[[3]]
+f1_veinteNA <-metricas_veinteNA[[4]]
+roccurve_veinteNA<-metricas_veinteNA[[5]]
+AUC_veinteNA <- metricas_veinteNA[[6]]
+
+
+# 50% NAN's
+
+train_cincNA <- ponerNA(50, train_data)
+val_cincNA <- ponerNA(50, val_data)
+test_cincNA <- ponerNA(50, test_data)
+mej_hiper <- grid_search(train_cincNA, val_cincNA)
+
+modelo_cincNA <- rpart(formula = train_cincNA$loan_status ~ ., data = train_cincNA, method = "class", control = rpart.control(maxdepth = mej_hiper$maxdepth_value, minsplit = mej_hiper$minsplit_value, minbucket = mej_hiper$minbucket_value, cp = 0, xval = 0))
+
+metricas_cincNA <- metricas_performance(modelo_cincNA, test_cincNA)
+accuracy_cincNA <- metricas_cincNA[[1]]
+precision_cincNA <- metricas_cincNA[[2]]
+recall_cincNA <- metricas_cincNA[[3]]
+f1_cincNA <-metricas_cincNA[[4]]
+roccurve_cincNA<-metricas_cincNA[[5]]
+AUC_cincNA <- metricas_cincNA[[6]]
+
+
+# 75% NAN's
+
+train_seteNA <- ponerNA(75, train_data)
+val_seteNA <- ponerNA(75, val_data)
+test_seteNA <- ponerNA(75, test_data)
+mej_hiper <- grid_search(train_seteNA, val_seteNA)
+
+modelo_seteNA <- rpart(formula = train_seteNA$loan_status ~ ., data = train_seteNA, method = "class", control = rpart.control(maxdepth = mej_hiper$maxdepth_value, minsplit = mej_hiper$minsplit_value, minbucket = mej_hiper$minbucket_value, cp = 0, xval = 0))
+ 
+metricas_seteNA <- metricas_performance(modelo_seteNA, test_seteNA)
+accuracy_seteNA <- metricas_seteNA[[1]]
+precision_seteNA <- metricas_seteNA[[2]]
+recall_seteNA <- metricas_seteNA[[3]]
+f1_seteNA <-metricas_seteNA[[4]]
+roccurve_seteNA<-metricas_seteNA[[5]]
+AUC_seteNA <- metricas_seteNA[[6]]
+
+
+metricas_comparativa <- data.frame(
+  Métrica = c("Accuracy", "Precision", "Recall", "F1 Score", "AUC"),
+  Modelo_optimizado = c(accuracy_modelo2, precision_modelo2, recall_modelo2, f1_modelo2, AUC_VALUE2),
+  Modelo_20 = c(accuracy_veinteNA, precision_veinteNA, recall_veinteNA ,f1_veinteNA, AUC_veinteNA),
+  Modelo_50 = c(accuracy_cincNA, precision_cincNA, recall_cincNA ,f1_cincNA, AUC_cincNA),
+  Modelo_75 = c(accuracy_seteNA, precision_seteNA, recall_seteNA ,f1_seteNA, AUC_seteNA)
+)
+
+
+kable(metricas_comparativa, caption = "Comparativa de métricas entre los modelos con valores faltantes")
+```
+
 ```
 
