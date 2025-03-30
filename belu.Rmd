@@ -437,7 +437,7 @@ Los resultados obtenidos de las métricas de evaluación se detallan a continuac
    - El AUC-ROC (Área bajo la curva ROC) es 0.9415, lo que indica un rendimiento muy bueno del modelo (es cercano a 1) ya que la curva ROC compara la tasa de verdaderos positivos con la tasa de falsos positivos.
 
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.cap= "Curva ROC - Árbol de Decisión"}
 
 # 4. CALCULAR MÉTRICAS DE PERFORMANCE
 
@@ -448,13 +448,21 @@ f1_modelo1 <-metricas_modelo1[[4]]
 roc_curve<-metricas_modelo1[[5]]
 AUC_VALUE1 <- metricas_modelo1[[6]]
 
+# Crear el data frame con las sensibilidades y especificidades
+roc_data <- data.frame(
+  sensitivity = roc_curve$sensitivities,  # Sensibilidad (True Positive Rate)
+  specificity = roc_curve$specificities  # Especificidad (True Negative Rate)
+)
 
-# 6. Graficar la Curva ROC
-plot(roc_curve, col = "blue", main = "Figura 1: Curva ROC - Árbol de Decisión",
-     xlab = "False Positive Rate", ylab = "True Positive Rate")
+# Graficar la curva ROC utilizando ggplot2
+ggplot(roc_data, aes(x = 1 - specificity, y = sensitivity)) +  # 1 - Specificity -> False Positive Rate
+  geom_line(color = "darkseagreen2", size = 1) +  # Curva ROC
+  labs(x = "False Positive Rate (1 - Specificity)",
+       y = "True Positive Rate (Sensitivity)") +
+  theme_minimal() +
+  annotate("text", x = 0.5, y = 0.1, label = sprintf("AUC = %.2f", AUC_VALUE1), color = "blue") +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray")  # Línea del clasificador aleatorio
 
-legend("bottomright", legend=c("ROC", "Random Classifier"), 
-       col=c("blue", "gray"), lty=c(1, 2), cex=0.8)
 ```
 
 En términos de la curva ROC que obtenemos, efectivamente mostramos que nuestro modelo cuenta con alta sensibilidad (True Positive Rate) y especificidad (False Positive Rate), corroborando el hecho de que la curva azul se aproxime a la esquina de la parte superior izquierda, donde el modelo clasificaría correctamente a muchos de los positivos y a los negativos. 
@@ -473,8 +481,8 @@ grid_search <- function(train, validation){
   minsplit_values  <- sample(1:30, 10) 
   minbucket_values <- sample(1:30, 10)
   
-  paramgrid<- expand.grid( maxdepth_values, minsplit_values, minbucket_values)
-  resultados<-data.frame(maxdepth_value = integer(), minsplit_value = integer(), minbucket_value = integer(), aucroc = numeric())
+  paramgrid <- expand.grid( maxdepth_values, minsplit_values, minbucket_values)
+  resultados <- data.frame(maxdepth_value = integer(), minsplit_value = integer(), minbucket_value = integer(), aucroc = numeric())
   
   for(i in maxdepth_values){
     for (j in minsplit_values ){
@@ -497,12 +505,30 @@ grid_search <- function(train, validation){
 res <- grid_search(train_data, val_data)
 
 
-# Imprimir resultados
-cat("Mejores Hiperparámetros:\n")
-print(res)
+```
 
-cat("\nHiperparámetros default:\n")
-print(tree$control)
+
+#### Mejores Hiperparámetros
+Los mejores hiperparámetros encontrados en la optimización son:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+cat("max_depth =", res$maxdepth, 
+     ", min_split =", res$minsplit, 
+     ", min_bucket =", res$minbucket,"\n")
+
+```
+
+
+ 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# # Imprimir resultados
+# cat("Mejores Hiperparámetros:\n")
+# print(res)
+# 
+# cat("Hiperparámetros: max_depth =", tree$control$maxdepth, 
+#     ", min_split =", tree$control$minsplit, 
+#     ", min_bucket =", tree$control$minbucket, "\n")
 
 # Definir las métricas de modelo2
 
@@ -524,8 +550,10 @@ minsplit2 = res$minsplit_value
 minbucket2 = res$minbucket_value
 metricas_comparativa1 <- data.frame(
   Parámetro = c("maxdepth", "minsplit", "minbucket"),
-  Modelo_1 = c(30, 20, 7), 
-  Modelo_2 = c(maxdepth2, minsplit2, minbucket2),  
+  # Modelo_1 = c(30, 20, 7), 
+  # Modelo_2 = c(maxdepth2, minsplit2, minbucket2),
+  Modelo_Default = c(30, 20, 7), 
+  Modelo_Opt = c(maxdepth2, minsplit2, minbucket2),
   Diferencia_Porcentual= c(((maxdepth2 - 30) / 30) * 100,  
                  ((minsplit2 - 20) / 20) * 100, 
                  ((minbucket2 - 7) / 7) * 100)   
@@ -533,8 +561,10 @@ metricas_comparativa1 <- data.frame(
 
 # Crear una tabla comparativa 2
 metricas_comparativa2 <- data.frame(
-  Modelo_1 = c(accuracy_modelo1, precision_modelo1, recall_modelo1, f1_modelo1 ),
-  Modelo_2 = c(accuracy_modelo2, precision_modelo2, recall_modelo2, f1_modelo2),
+  # Modelo_1 = c(accuracy_modelo1, precision_modelo1, recall_modelo1, f1_modelo1 ),
+  # Modelo_2 = c(accuracy_modelo2, precision_modelo2, recall_modelo2, f1_modelo2),
+  Modelo_Default = c(accuracy_modelo1, precision_modelo1, recall_modelo1, f1_modelo1 ),
+  Modelo_Opt = c(accuracy_modelo2, precision_modelo2, recall_modelo2, f1_modelo2),
   Diferencia = c(accuracy_modelo2 - accuracy_modelo1, 
                  precision_modelo2 - precision_modelo1,
                  recall_modelo2 - recall_modelo1,
@@ -551,13 +581,14 @@ Inicialmente, el árbol por defecto tenía un AUC-ROC de 0.9415207. Para encontr
 
 En la Tabla 4 se observa que el nuevo modelo muestra una mejora en términos de accuracy, precisión y F1, aunque presenta una ligera disminución en recall. El F1 score experimenta una leve mejora, lo que sugiere un buen equilibrio entre precisión y recall. Sin embargo, el modelo pierde algo de capacidad para identificar los casos en los que sería adecuado otorgar un préstamo a una persona capaz de pagarlo. En otras palabras, esto podría traducirse en una pérdida de oportunidades y de ganancia para la empresa, ya que podría haberse beneficiado al otorgar el préstamo a una persona confiable. A pesar de la disminución en recall, el Modelo 2 sigue siendo generalmente superior, y dicha reducción no parece ser crítica dentro del contexto del problema.
 
-
+\newpage
 # **6. Interpretación de resultados ** 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Árbol de Decisión del Modelo Optimizado"}
 rpart.plot(modelo2, main = "Árbol de Decisión", type = 2, extra = 104)
 
 ```
+
 En el primer modelo, el valor predeterminado de minsplit era 20, lo que implicaba que, para hacer una partición, el modelo requería al menos 20 observaciones por nodo. Esto hacía que fuera más exigente y dificultaba la creación de particiones cuando había menos de 20 observaciones en un nodo. En el segundo modelo, esta exigencia se redujo a 15, lo que facilita la creación de particiones con menos observaciones, permitiendo una mayor granularidad y, por lo tanto, un modelo más detallado.
 
 En cuanto a la profundidad del árbol (maxdepth), el valor predeterminado de 30 era bastante alto. Aunque, al hacer las particiones, no era necesario que el árbol fuera tan profundo, y en el peor de los casos, el árbol solo alcanzaba una profundidad de 6 niveles. Sin embargo, en el segundo modelo, la profundidad máxima llegó a ser de 17 niveles, lo que indica que el modelo ahora es mucho más profundo y tiene más capacidad para capturar complejidades en los datos.
@@ -568,6 +599,7 @@ Lo que notamos en el árbol resultante es que este ha aumentado considerablement
 
 ```{r, echo=FALSE,  warning=FALSE, message=FALSE}
 library(dplyr)
+library(stringr)
 
 range = seq(2, 30, by = 2)
 
@@ -631,8 +663,8 @@ ggplot(grafico, aes(x = value, y = auc, color = hiperparametro)) +
     x = "Valor del hiperparámetro",
     y = "AUC",
     color = "Hiperparámetro",
-    caption = "Nota: Para cada línea se evalúa cómo afecta el hiperparámetro correspondiente al color,\n
-    manteniendo los otros dos fijos. Además, se consideró que siempre se cumpla la restricción: min_split >= min_bucket."
+    caption = str_wrap("Nota: Para cada línea se evalúa cómo afecta el hiperparámetro correspondiente al color,\n
+    manteniendo los otros dos fijos. Además, se consideró que siempre se cumpla la restricción: min_split >= min_bucket.")
   ) + 
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
@@ -640,12 +672,69 @@ ggplot(grafico, aes(x = value, y = auc, color = hiperparametro)) +
         plot.caption = element_text(hjust = 0)
   ) 
 
+```
+
+A partir del gráfico XX presentado, podemos analizar el impacto de los hiperparámetros max_depth, min_split y min_bucket en el desempeño del modelo, medido a través del área bajo la curva (AUC).
+
+En primer lugar, observamos que el hiperparámetro con mayor influencia en el AUC es max_depth. A medida que aumenta desde 2 hasta aproximadamente 10, el AUC experimenta un crecimiento significativo, evidenciado por una pendiente pronunciada en la curva correspondiente. A partir de un valor de max_depth = 10, el AUC se estabiliza y alcanza un valor óptimo (0.9636), manteniéndose constante incluso con valores más altos de max_depth (>=12). Este comportamiento sugiere que más allá de cierto punto, aumentar la profundidad del árbol no aporta beneficios adicionales en términos de AUC y podría incluso derivar en un sobreajuste si no se controla adecuadamente.
+
+Por otro lado, los hiperparámetros min_bucket y min_split muestran un comportamiento distinto. Desde valores bajos (por ejemplo, 2), estos ya presentan un AUC elevado, cercano a su valor óptimo. La curva de ambos parámetros se mantiene estable a lo largo de los distintos valores evaluados, lo que indica que su impacto en el rendimiento del modelo es menor en comparación con max_depth. Esto sugiere que una vez superado un umbral mínimo, estos parámetros no afectan significativamente la capacidad predictiva del modelo.
+
+Un punto clave en el análisis ocurre alrededor de un valor de 16 para los tres hiperparámetros, donde el AUC se estabiliza completamente y toma un valor constante. Este comportamiento es crucial, ya que indica un punto de saturación en la optimización del modelo: más allá de este umbral, el ajuste de los hiperparámetros no genera mejoras en el desempeño.
+
+En conclusión, el análisis sugiere que max_depth es el hiperparámetro con mayor influencia en la mejora del modelo, mientras que min_bucket y min_split tienen un impacto más limitado. Esto permite inferir que, en términos de optimización, es fundamental ajustar max_depth con mayor precisión, mientras que los otros dos hiperparámetros pueden establecerse en valores moderados sin una pérdida significativa en la calidad del modelo.
+
+```{r, echo=FALSE,  warning=FALSE, message=FALSE}
+
+
+library(tibble)
+library(dplyr)
+
+#VI con modelo default
+
+imp_reescalada_d <- (tree$variable.importance)*100/max(tree$variable.importance)
+variables_d <- data.frame(variable = names(tree$variable.importance),
+                 imp = imp_reescalada_d)
+
+# Ordenar por importancia
+variables_d <- variables_d[order(variables_d$imp), ]
+
+# Crear el gráfico
+ggplot(variables_d, aes(x = reorder(variable, imp), y = imp)) +
+  geom_bar(stat = "identity", fill = "#E07A5F", ) +
+  coord_flip() +
+  theme_minimal() +
+  labs(title = "Variable Importance del modelo default", x = NULL, y = "Variable Importance reescalada")
+
+
+#VI con modelo optimizado 
+imp_reescalada_o <- (modelo2$variable.importance)*100/max(modelo2$variable.importance)
+variables_o <- data.frame(variable = names(modelo2$variable.importance),
+                 imp = imp_reescalada_o)
+
+# Ordenar por importancia
+variables <- variables_o[order(variables_o$imp), ]
+
+# Crear el gráfico
+ggplot(variables_o , aes(x = reorder(variable, imp), y = imp)) +
+  geom_bar(stat = "identity", fill = "#6AA4C1", ) +
+  coord_flip() +
+  theme_minimal() +
+  labs(title = "Variable Importance del modelo optimizado", x = NULL, y = "Variable Importance reescalada")
 
 ```
 
+En estos gráficos observamos que, tanto en el modelo original con los hiperparámetros por defecto como en el modelo optimizado, la importancia de las variables se mantiene igual. Destaca especialmente previous_loan_defaults_on_file, lo que indica que el historial de incumplimiento de préstamos anteriores es un factor clave en las predicciones. Además, la relación entre el monto del préstamo y los ingresos del solicitante, así como la tasa de interés, tienen un impacto significativo. Otros factores relevantes incluyen los ingresos personales, la propiedad de vivienda y el puntaje de crédito. Por otro lado, algunas variables, como el género y la educación, parecen tener poca influencia y podrían ser eliminadas para simplificar el modelo sin perder su precisión.
+
+
+\newpage
 
 # **7. Análisis del impacto de los valores faltantes** 
 
+
+En esta sección, se evalúa cómo la presencia de valores faltantes en las variables predictoras afecta el rendimiento de un modelo de clasificación basado en árboles de decisión. Para ello, tomamos el conjunto de datos original -que no tenía valores faltantes- e insertamos aleatoriamente valores faltantes para generar tres conjuntos de datos nuevos, cuyas proporciones de valores faltantes son: 20%, 50% y 75%. Estos conjuntos se aplicaron tanto al entrenamiento, validación como al testeo, manteniendo las mismas observaciones en cada versión para garantizar la consistencia del análisis.
+
+Se procedió a optimizar los hiperparámetros del árbol de decisión en cada caso, maximizando el AUC en el conjunto de validación con un algoritmo de grid search. Finalmente, se comparó el desempeño de cada modelo con el árbol optimizado previamente obtenido en el punto 5, evaluando cómo el aumento en la proporción de datos faltantes impacta en las métricas de rendimiento. Este análisis se complementa con gráficos que ilustran visualmente las diferencias entre los modelos.
 
 ```{r, echo=FALSE,  warning=FALSE, message=FALSE}
 ponerNA<- function(porcentaje, dataset){
@@ -718,17 +807,126 @@ roccurve_seteNA<-metricas_seteNA[[5]]
 AUC_seteNA <- metricas_seteNA[[6]]
 
 
-metricas_comparativa <- data.frame(
-  Métrica = c("Accuracy", "Precision", "Recall", "F1 Score", "AUC"),
+metricas_comparativa_NA <- data.frame(
+  Modelo_optimizado = c(accuracy_modelo2, precision_modelo2, recall_modelo2, f1_modelo2, AUC_VALUE2),
+  Modelo_20 = c(accuracy_veinteNA, precision_veinteNA, recall_veinteNA ,f1_veinteNA, AUC_veinteNA),
+  Modelo_50 = c(accuracy_cincNA, precision_cincNA, recall_cincNA ,f1_cincNA, AUC_cincNA),
+  Modelo_75 = c(accuracy_seteNA, precision_seteNA, recall_seteNA ,f1_seteNA, AUC_seteNA)
+)
+rownames(metricas_comparativa_NA) <- c("Accuracy", "Precision", "Recall", "F1 Score", "AUC")
+
+# Imprimir la tabla
+kable(metricas_comparativa_NA, caption = "Comparativa de métricas entre los modelos con valores faltantes", format = "latex", booktabs = TRUE) 
+ 
+```
+
+
+
+Grafico curvas ROC para los distintos modelos:
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+roccurve_modelo2<-metricas_modelo2[[5]]
+# Crear data frames con sensibilidades y especificidades para cada curva ROC
+roc_data_optimizado <- data.frame(
+  sensitivity = roccurve_modelo2$sensitivities,
+  specificity = roccurve_modelo2$specificities,
+  modelo = "Modelo Optimizado" 
+)
+
+roc_data_20 <- data.frame(
+  sensitivity = roccurve_veinteNA$sensitivities,
+  specificity = roccurve_veinteNA$specificities,
+  modelo = "Modelo 20% NA"
+)
+
+roc_data_50 <- data.frame(
+  sensitivity = roccurve_cincNA$sensitivities,
+  specificity = roccurve_cincNA$specificities,
+  modelo = "Modelo 50% NA"
+)
+
+roc_data_75 <- data.frame(
+  sensitivity = roccurve_seteNA$sensitivities,
+  specificity = roccurve_seteNA$specificities,
+  modelo = "Modelo 75% NA"
+)
+
+# Combinar todos los data frames en uno solo
+roc_data <- rbind(roc_data_optimizado, roc_data_20, roc_data_50, roc_data_75)
+
+# Graficar las curvas ROC con ggplot2
+ggplot(roc_data, aes(x = 1 - specificity, y = sensitivity, color = modelo)) +
+  geom_line(size = 1) +
+  labs(
+    x = "False Positive Rate (1 - Specificity)",
+    y = "True Positive Rate (Sensitivity)",
+    title = "Comparación de Curvas ROC para Diferentes Modelos",
+    color = "Modelo"
+  ) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray") + 
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +  # Centrar el título
+  scale_color_manual(values = c(
+    "Modelo Optimizado" = "#6AA4C1",  # Azul claro
+    "Modelo 20% NA" = "#E07A5F",      # Salmón suave
+    "Modelo 50% NA" = "#81B29A",      # Verde menta
+    "Modelo 75% NA" = "#F2CC8F"       # Amarillo suave
+  )) +
+  annotate("text", x = 0.75, y = 0.25, label = sprintf("AUC Modelo Optimizado = %.2f", AUC_VALUE2), color = "#6AA4C1") +
+  annotate("text", x = 0.75, y = 0.20, label = sprintf("AUC Modelo 20%% NA = %.2f", AUC_veinteNA), color = "#E07A5F") +
+  annotate("text", x = 0.75, y = 0.15, label = sprintf("AUC Modelo 50%% NA = %.2f", AUC_cincNA), color = "#81B29A") +
+  annotate("text", x = 0.75, y = 0.10, label = sprintf("AUC Modelo 75%% NA = %.2f", AUC_seteNA), color = "#F2CC8F")
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+
+library(tidyr)
+library(tibble)
+
+
+
+
+# Crear el dataframe de las métricas comparativas con las métricas para cada modelo
+metricas_comparativa_NA <- data.frame(
   Modelo_optimizado = c(accuracy_modelo2, precision_modelo2, recall_modelo2, f1_modelo2, AUC_VALUE2),
   Modelo_20 = c(accuracy_veinteNA, precision_veinteNA, recall_veinteNA ,f1_veinteNA, AUC_veinteNA),
   Modelo_50 = c(accuracy_cincNA, precision_cincNA, recall_cincNA ,f1_cincNA, AUC_cincNA),
   Modelo_75 = c(accuracy_seteNA, precision_seteNA, recall_seteNA ,f1_seteNA, AUC_seteNA)
 )
 
+# Asignar nombres a las filas del dataframe
+rownames(metricas_comparativa_NA) <- c("Accuracy", "Precision", "Recall", "F1 Score", "AUC")
 
-kable(metricas_comparativa, caption = "Comparativa de métricas entre los modelos con valores faltantes")
+# Calcular la proporción con respecto al Modelo Optimizado
+metricas_comparativa_NA$Proporcion_20 <- metricas_comparativa_NA$Modelo_20 / metricas_comparativa_NA$Modelo_optimizado
+metricas_comparativa_NA$Proporcion_50 <- metricas_comparativa_NA$Modelo_50 / metricas_comparativa_NA$Modelo_optimizado
+metricas_comparativa_NA$Proporcion_75 <- metricas_comparativa_NA$Modelo_75 / metricas_comparativa_NA$Modelo_optimizado
+
+# Convertir el dataframe a formato largo para ggplot
+df_long <- metricas_comparativa_NA %>%
+  rownames_to_column("Métrica") %>%
+  pivot_longer(cols = starts_with("Proporcion"), names_to = "Modelo", values_to = "Proporción")
+
+# Gráfico con ggplot2
+ggplot(df_long, aes(x = Métrica, y = Proporción, fill = Modelo)) +
+  geom_bar(stat = "identity",position = position_dodge(width = 0.5), width = 0.4) +
+  ylim(0, 1.05) +  # Ajusta el límite superior para que no sobrepase 1
+  labs(title = "Desempeño Relativo respecto al Modelo Optimizado",
+       x = "Métrica",
+       y = "Proporción de Desempeño") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_manual(values = c("Proporcion_20" = "#6AA4C1", "Proporcion_50" = "#E07A5F", "Proporcion_75" = "#81B29A"))
+
 ```
 
-```
+
+En el gráfico se compara el desempeño de los modelos con diferentes porcentajes de valores faltantes (20%, 50%, 75%) en relación con el modelo optimizado. La división entre los modelos refleja la proporción de desempeño de cada modelo en comparación con el optimizado, lo que permite observar cómo se ve afectado el rendimiento conforme aumenta el porcentaje de valores faltantes.
+
+Un patrón claro es que todas las métricas, excepto recall, disminuyen conforme se incrementa el porcentaje de valores faltantes. Esto es consistente con lo que muestra el gráfico de AUC: a medida que aumenta el porcentaje de valores faltantes, el rendimiento de cada métrica (accuracy, precision, F1 score, AUC) empeora, siendo más pronunciada esta caída a medida que nos acercamos al 75% de valores faltantes. En cambio, recall muestra un comportamiento diferente: en el modelo optimizado, tiene un valor de 0.960, pero mejora en los modelos con 50% (0.9636) y 75% (0.9658) de valores faltantes. Este patrón sugiere que, aunque el modelo pierde precisión en otras métricas, se vuelve más efectivo para identificar los casos positivos cuando la proporción de valores faltantes aumenta.
+A partir del análisis del gráfico anterior, donde observamos que a mayor cantidad de valores faltantes (NA), el rendimiento del modelo disminuye, en este gráfico podemos ver de manera más detallada el impacto en cada métrica individual. Concluimos que accuracy, precision, F1 score y AUC disminuyen conforme aumenta el porcentaje de valores faltantes, lo que indica una pérdida en la capacidad del modelo para discriminar entre las clases. Sin embargo, recall muestra un comportamiento interesante: mejora en los modelos con 50% y 75% de valores faltantes. Esto sugiere que, aunque el modelo pierde precisión en otras métricas, sigue siendo eficaz para identificar los casos positivos, e incluso, en algunos casos, mejora en esta capacidad a pesar del aumento de los valores faltantes.
+
 
