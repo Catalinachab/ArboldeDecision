@@ -97,7 +97,7 @@ Es importante destacar la relevancia de analizar la distribución de cada atribu
 
 ## **Distribución de Variables Numéricas**
 
-```{r, echo=FALSE, warning=FALSE, fig.cap="Distribución de Variables Numéricas",  message=FALSE}
+```{r, echo=FALSE, warning=FALSE, fig.cap= "Distribución de Variables Numéricas" ,  message=FALSE}
 loan_data <- data
 loan_data$log_person_age <- log1p(loan_data$person_age)
 loan_data$log_person_income <- log1p(loan_data$person_income)
@@ -128,46 +128,20 @@ hist(loan_data$log_cb_person_cred_hist_length,
 par(mfrow=c(1,1))
 
 ```
-\newpage
+
+
+
 
 ## **Distribución de Variables Categóricas**
 
 Luego de analizar la distribución de las variables categóricas, no se identifican patrones relevantes ni desequilibrios significativos que requieran mención.
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=14, fig.height=8}
-library(ggplot2)
-library(dplyr)
-library(patchwork)
 
-# cat_vars <- c("person_gender", 
-#               "person_education", 
-#               "person_home_ownership", 
-#               "loan_intent", 
-#               "previous_loan_defaults_on_file", 
-#               "loan_status")
-# 
-# plots <- lapply(cat_vars, function(var) {
-#   ggplot(loan_data, aes_string(x = var)) +
-#     geom_bar(fill = "lightblue") +
-#     ggtitle(paste("Distribución de", var)) +
-#     theme_minimal() +
-#     theme(axis.text.x = element_text(angle = 45, hjust = 1),
-#           plot.title = element_text(size = 10))
-# })
-# 
-# # Armar las filas
-# fila1 <- plots[[1]] + plots[[2]] + plots[[3]] + plot_layout(ncol = 3)
-# fila2 <- plots[[4]] + plots[[5]] + plots[[6]] + plot_layout(ncol = 3)
-# 
-# # Combinar filas con un espacio
-# fila1 / plot_spacer() / fila2 + 
-#   plot_layout(heights = c(1, 0.2, 1))  # El 0.2 define el espacio entre filas
-
-```
 
 
 ## **Anomalías** 
 
-```{r, echo=FALSE, warning=FALSE, fig.cap="Boxplots de Experiencia Laboral y Edad", message=FALSE}
+```{r, echo=FALSE, warning=FALSE, fig.cap= "Boxplots de Experiencia Laboral y Edad", message=FALSE}
+
 par(mfrow = c(1, 2))  # 1 fila y 2 columnas
   
   # Boxplot para la variable 'person_age'
@@ -176,7 +150,7 @@ par(mfrow = c(1, 2))  # 1 fila y 2 columnas
           ylab = "Edad", 
           col = "lightblue", 
           border = "black", 
-          horizontal = FALSE)  # gráfico vertical
+          horizontal = FALSE) 
   
   # Boxplot para la variable 'person_emp_exp'
   boxplot(data$person_emp_exp, 
@@ -184,7 +158,7 @@ par(mfrow = c(1, 2))  # 1 fila y 2 columnas
           ylab = "Años de Experiencia Laboral", 
           col = "lightblue", 
           border = "black", 
-          horizontal = FALSE)  # gráfico vertical
+          horizontal = FALSE)  
   
 ```
 
@@ -193,22 +167,24 @@ En el análisis preliminar de este conjunto de datos, se han identificado alguno
 
 Como resultado de los análisis realizados, no se eliminará ninguna información del conjunto de datos para evitar introducir sesgos en el proceso.
 
+\newpage
+
 ## **Chequeo de datos balanceados** 
 
 Para evaluar el balance de nuestro conjunto de datos, analizamos las proporciones de las categorías de la variable de interés, en este caso, el estado del préstamo (aceptado o rechazado). A continuación, creamos un gráfico de barras que muestra la proporción de "Aceptado" y "Rechazado" en el conjunto de datos.
   
 
-```{r fig.width=4, fig.height=3, fig.cap="Proporción de Aceptados y Rechazados", echo=FALSE, warning=FALSE, message=FALSE}
+```{r fig.width=4, fig.height=3, fig.cap= "Proporción de Aceptados y Rechazados", echo=FALSE, warning=FALSE, message=FALSE}
 # Contar proporciones
 yes_no_counts <- table(data$loan_status)
 yes_no_proportions <- prop.table(yes_no_counts)
 
-# Ajustar márgenes y reducir tamaño
+
 par(mar = c(3, 3, 2, 1), mgp = c(2, 0.5, 0), tck = -0.02)
 
-# Crear el gráfico de barras más compacto
+
 barplot(yes_no_proportions, 
-        main = "",  # Quitamos el título para agregarlo con title()
+        main = "",  
         xlab = "Estado del Préstamo", 
         ylab = "Proporción", 
         col = c("lightcoral", "lightblue"), 
@@ -216,16 +192,17 @@ barplot(yes_no_proportions,
         names.arg = c("Rechazado", "Aceptado"),  
         ylim = c(0, 1),  
         las = 1,        
-        cex.names = 0.7, # Reducir tamaño de etiquetas
-        cex.axis = 0.7,  # Reducir tamaño de los ejes
+        cex.names = 0.7,
+        cex.axis = 0.7, 
         space = 0.3)    
 
-# Agregar título con tamaño reducido
+
 title(main = "Proporción de Aceptados y Rechazados", cex.main = 0.8)
 
 
 
 ```
+
 
 Al examinar el gráfico y las proporciones obtenidas, observamos que aproximadamente el 22% de los registros corresponden a "Aceptados" y el 77% a "Rechazados". Esto indica que el conjunto de datos no está completamente balanceado, aunque la desproporción no es extremadamente alta.
 La desproporción en el conjunto de datos podría generar un sesgo hacia la clase mayoritaria ("Rechazados"), lo que podría resultar en un mejor desempeño del modelo para predecir esta clase y un desempeño inferior para la clase minoritaria ("Aceptados").
@@ -233,6 +210,7 @@ La desproporción en el conjunto de datos podría generar un sesgo hacia la clas
 Sin embargo, decidimos no intervenir en el conjunto de datos eliminando registros o utilizando técnicas de balanceo como sobremuestreo o submuestreo. Esto se debe a que tales técnicas podrían introducir sesgos adicionales o alterar la representatividad del conjunto de datos. En cambio, optamos por mantener la estructura original y tener en cuenta las proporciones de las clases al entrenar, validar y evaluar el modelo.
 
 \newpage
+
 # **3. Construcción de árbol de decisión básico**
 
 
@@ -245,7 +223,7 @@ library(rpart.plot)
 # Fijar semilla para replicabilidad
 set.seed(123)
 
-# Crear índices estratificados para entrenamiento (70%)
+
 train_index <- createDataPartition(data$loan_status, p = 0.70, list = FALSE)
 
 # Conjunto de entrenamiento
@@ -259,46 +237,30 @@ val_index <- createDataPartition(remaining$loan_status, p = 0.50, list = FALSE)
 val_data <- remaining[val_index, ]
 test_data <- remaining[-val_index, ]
 
-# Verificar la distribución de loan_status en cada conjunto
-#prop.table(table(train_data$loan_status))  # Proporción en entrenamiento
-#prop.table(table(val_data$loan_status))    # Proporción en validación
-#prop.table(table(test_data$loan_status))   # Proporción en testeo
-
-# Imprimir tamaños
-#cat("Tamaño de Entrenamiento:", nrow(train_data), "\n")
-#cat("Tamaño de Validación:", nrow(val_data), "\n")
-#cat("Tamaño de Testeo:", nrow(test_data), "\n")
-
-
-
 tree <- rpart(formula = loan_status ~ person_age + person_gender + person_education + person_income + person_emp_exp + person_home_ownership + loan_amnt + loan_intent + loan_int_rate + loan_percent_income + cb_person_cred_hist_length + credit_score + previous_loan_defaults_on_file, 
               data = train_data, 
               method = "class")
 
 ```
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Árbol de Decisión del Modelo"}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.cap= "Árbol de Decisión del Modelo" }
 rpart.plot(tree, main = "Árbol de Decisión", type = 2, extra = 104)
 
 ```
 
 Al realizar el análisis, mantuvimos la proporción de otorgamiento de préstamos (22%) y rechazo (78%) a lo largo de las etapas de entrenamiento, validación y testeo. En la descripción del árbol de decisión, observamos que cada nodo se compone de tres filas:
 
-1.La primera fila indica la categoría de "no" (rechazo del préstamo).
+1.La primera fila indica la categoría a la que fue asignada un subgupo de los datos (rechazo del préstamo).
 
 2.La segunda fila muestra la proporción de casos dentro del subgrupo.
 
 3.La tercera fila indica cuántos datos se concentran en ese nivel del árbol.
 
-El árbol de decisión muestra que el primer factor que se utiliza para determinar si se le otorga un préstamo es la existencia de defaults previos (previous_loan_defaults_on_file), donde la presencia de antecedentes implica una altísima probabilidad de no pago. En ausencia de defaults, el siguiente factor relevante es la relación entre el monto solicitado y el ingreso (loan_percent_income), siendo los valores altos indicativos de mayor riesgo. Además, la tasa de interés del préstamo (loan_int_rate) cumple un rol clave: tasas superiores al 14% incrementan significativamente la probabilidad de incumplimiento. El nivel de ingresos (person_income) también influye, ya que a menor ingreso, el riesgo aumenta, especialmente combinado con tasas altas. La intención del préstamo (loan_intent), cuando es para educación, fines personales o emprendimientos, aparece asociada a mayor riesgo. Finalmente, la tenencia de vivienda propia o bajo hipoteca (person_home_ownership) contribuye a elevar la probabilidad de default en combinación con tasas altas y un elevado porcentaje préstamo/ingreso. En conjunto, estas variables permiten identificar perfiles de alto riesgo de manera clara. 
+El árbol de decisión de la Figura 4 muestra que el primer factor que se utiliza para determinar si se le otorga un préstamo es la existencia de defaults previos (previous_loan_defaults_on_file), donde la presencia de antecedentes implica una altísima probabilidad de no pago. En ausencia de defaults, el siguiente factor relevante es la relación entre el monto solicitado y el ingreso (loan_percent_income), siendo los valores altos indicativos de mayor riesgo. Además, la tasa de interés del préstamo (loan_int_rate) cumple un rol clave: tasas superiores al 14% incrementan significativamente la probabilidad de incumplimiento. El nivel de ingresos (person_income) también influye, ya que a menor ingreso, el riesgo aumenta, especialmente combinado con tasas altas. La intención del préstamo (loan_intent), cuando es para educación, fines personales o emprendimientos, aparece asociada a mayor riesgo. Finalmente, la tenencia de vivienda propia o bajo hipoteca (person_home_ownership) contribuye a elevar la probabilidad de default en combinación con tasas altas y un elevado porcentaje préstamo/ingreso. En conjunto, estas variables permiten identificar perfiles de alto riesgo de manera clara. A lo largo del árbol, el único atributo repetido es el de loan_int_rate.
 
 Como conclusión, utilizando esta instancia del modelo entrenado con el conjunto de datos train se le rechazaría al 83% el préstamo y al resto se le otorgaría. 
 
 ## **Hiperprámetros por defecto del árbol**
-
-```{r, echo=FALSE, results="hide"}
-tree$control
-```
 
 A continuación se detallan los hiperparámetros utilizados por defecto en la construcción del árbol y el impacto que tiene cada uno en la estructura del modelo:
 
@@ -330,17 +292,6 @@ Se construye una matriz de confusión para analizar el rendimiento del modelo de
 3. *FP* (Falsos Positivos): 6.98%
 4. *FN* (Falsos Negativos): 2.06% 
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-# Realizar predicciones en el conjunto de testeo
-predicciones_prob <- predict(tree, newdata = test_data, type = "prob")
-predicciones_clase <- predict(tree, newdata = test_data, type = "class")
-
-# Ver las probabilidades predichas
-# head(predicciones_prob)
-
-# Ver las clases predichas
-# head(predicciones_clase)
-```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 library(pROC)        # Para calcular AUC-ROC
@@ -348,7 +299,10 @@ library(pheatmap)
 library(gridExtra)
 library(grid)
 
+predicciones_prob <- predict(tree, newdata = test_data, type = "prob")
+predicciones_clase <- predict(tree, newdata = test_data, type = "class")
 
+#Creamos función para calcular todas las metricas de performance de un arbol de decisión
 metricas_performance<- function(modelo, dataset){
   
   predicciones_clase <- predict(modelo, newdata = dataset, type = "class")
@@ -363,7 +317,7 @@ metricas_performance<- function(modelo, dataset){
   res<- list(accuracy, precision, recall, f1_score, roc_curve, auc_value, conf_matrix)
   return (res)
 }
-# Crear matriz de confusión
+
 metricas_modelo1 <- metricas_performance(tree, test_data)
 matriz_conf <- metricas_modelo1[[7]]
 
@@ -371,7 +325,7 @@ matriz_conf <- metricas_modelo1[[7]]
 total <- sum(matriz_conf$table)
 matriz_conf$table <- (matriz_conf$table / total) * 100  
 gen_m_c = function(matriz_conf, filename = NULL) {
-  # Crear el heatmap sin imprimir automáticamente
+  #creamos heatmap
   p <- pheatmap(matriz_conf, 
                 display_numbers = TRUE,
                 color = colorRampPalette(c("coral", "gold"))(50),
@@ -384,12 +338,12 @@ gen_m_c = function(matriz_conf, filename = NULL) {
                 fontsize_number = 12, 
                 cellwidth = 60,       
                 cellheight = 60,
-                silent = TRUE)  # Evita que `pheatmap` imprima automáticamente
+                silent = TRUE)  #
 
 
-  # Combinar heatmap y título en un solo gráfico
-  grid.newpage() # Crear una nueva página para evitar superposición
-  grid.draw(p$gtable)  # Dibujar solo una vez
+
+  grid.newpage() 
+  grid.draw(p$gtable)  
 
   # Guardar la imagen si se especifica un filename
   if (!is.null(filename)) {
@@ -406,17 +360,15 @@ gen_m_c(matriz_conf$table, filename = "matriz_confusion.png")
 ```{r, echo= FALSE, warning=FALSE, message=FALSE}
 library(caret)
 
-# Suponiendo que tienes las predicciones y el conjunto de datos de test
-# Confusión matriz
+
 matriz_conf <- confusionMatrix(predicciones_clase, as.factor(test_data$loan_status))
 total <- sum(matriz_conf$table)
 
 # Extraer los valores de la matriz de confusión y guardar los porcentajes que representan
-TP <- matriz_conf$table[1, 1] / total * 100 # Verdaderos positivos
-TN <- matriz_conf$table[2, 2] / total * 100 # Verdaderos negativos
-FP <- matriz_conf$table[1, 2] / total * 100 # Falsos positivos
-FN <- matriz_conf$table[2, 1] / total * 100 # Falsos negativos
-
+TP <- matriz_conf$table[1, 1] / total * 100 
+TN <- matriz_conf$table[2, 2] / total * 100 
+FP <- matriz_conf$table[1, 2] / total * 100 
+FN <- matriz_conf$table[2, 1] / total * 100 
 ```
 
 Los resultados obtenidos de las métricas de evaluación se detallan a continuación:
@@ -438,8 +390,10 @@ Los resultados obtenidos de las métricas de evaluación se detallan a continuac
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.cap= "Curva ROC - Árbol de Decisión"}
+library(ggplot2)
+library(dplyr)
 
-# 4. CALCULAR MÉTRICAS DE PERFORMANCE
+# CALCULAR MÉTRICAS DE PERFORMANCE
 
 accuracy_modelo1 <- metricas_modelo1[[1]]
 precision_modelo1 <- metricas_modelo1[[2]]
@@ -465,7 +419,7 @@ ggplot(roc_data, aes(x = 1 - specificity, y = sensitivity)) +  # 1 - Specificity
 
 ```
 
-En términos de la curva ROC que obtenemos, efectivamente mostramos que nuestro modelo cuenta con alta sensibilidad (True Positive Rate) y especificidad (False Positive Rate), corroborando el hecho de que la curva azul se aproxime a la esquina de la parte superior izquierda, donde el modelo clasificaría correctamente a muchos de los positivos y a los negativos. 
+En términos de la curva ROC que obtenemos (Figura 5), efectivamente mostramos que nuestro modelo cuenta con alta sensibilidad (True Positive Rate) y especificidad (False Positive Rate), corroborando el hecho de que la curva azul se aproxime a la esquina de la parte superior izquierda, donde el modelo clasificaría correctamente a muchos de los positivos y a los negativos. 
 
 Si dicha curva ocupase valores más próximos a la diagonal gris, significaría que el modelo no se comporta mejor que el de una clasificación aleatoria. En el caso ideal, donde el modelo es perfecto, tendríamos la curva pegada a los ejes, de forma que obtendríamos una AUC de 1, es decir, la curva podría ir hacia el destino óptimo de manera lineal. 
 
@@ -475,9 +429,9 @@ Además, la curva ROC en los datos de test indica que el modelo mantiene un buen
 # **5. Optimización del modelo** 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-library(caret)
+#creamos la función grid search para buscar los mejores hiper-parámetros
 grid_search <- function(train, validation){
-  maxdepth_values  <- sample(1:30, 10)
+  maxdepth_values  <- sample(1:30, 10) #selecciona aleatoriamente 10 numeros dentro del rango
   minsplit_values  <- sample(1:30, 10) 
   minbucket_values <- sample(1:30, 10)
   
@@ -501,36 +455,20 @@ grid_search <- function(train, validation){
   return(mejores_hiper)
 }
 
-
 res <- grid_search(train_data, val_data)
-
 
 ```
 
 
 #### Mejores Hiperparámetros
-Los mejores hiperparámetros encontrados en la optimización son:
+
+Los hiperparámetros óptimos obtenidos durante la optimización se presentan en la Tabla 3, en comparación con los valores predeterminados de los modelos.
+
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-cat("max_depth =", res$maxdepth, 
-     ", min_split =", res$minsplit, 
-     ", min_bucket =", res$minbucket,"\n")
-
-```
 
 
- 
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-# # Imprimir resultados
-# cat("Mejores Hiperparámetros:\n")
-# print(res)
-# 
-# cat("Hiperparámetros: max_depth =", tree$control$maxdepth, 
-#     ", min_split =", tree$control$minsplit, 
-#     ", min_bucket =", tree$control$minbucket, "\n")
-
-# Definir las métricas de modelo2
+# Calculamos las métricas de modelo2
 
 modelo2 <- rpart(formula =loan_status ~ ., data = train_data, method = "class",
       control = rpart.control(maxdepth = res$maxdepth_value, minsplit = res$minsplit_value, minbucket = res$minbucket_value, cp = 0, xval = 0))
@@ -544,14 +482,13 @@ f1_modelo2 <-metricas_modelo2[[4]]
 roc_curve<-metricas_modelo2[[5]]
 AUC_VALUE2 <- metricas_modelo2[[6]]
 
-# Crear una tabla comparativa 1
+# Tabla comparativa 1
+AUC_VALUE2=  res$aucroc
 maxdepth2= res$maxdepth_value
 minsplit2 = res$minsplit_value
 minbucket2 = res$minbucket_value
 metricas_comparativa1 <- data.frame(
   Parámetro = c("maxdepth", "minsplit", "minbucket"),
-  # Modelo_1 = c(30, 20, 7), 
-  # Modelo_2 = c(maxdepth2, minsplit2, minbucket2),
   Modelo_Default = c(30, 20, 7), 
   Modelo_Opt = c(maxdepth2, minsplit2, minbucket2),
   Diferencia_Porcentual= c(((maxdepth2 - 30) / 30) * 100,  
@@ -561,23 +498,23 @@ metricas_comparativa1 <- data.frame(
 
 # Crear una tabla comparativa 2
 metricas_comparativa2 <- data.frame(
-  # Modelo_1 = c(accuracy_modelo1, precision_modelo1, recall_modelo1, f1_modelo1 ),
-  # Modelo_2 = c(accuracy_modelo2, precision_modelo2, recall_modelo2, f1_modelo2),
-  Modelo_Default = c(accuracy_modelo1, precision_modelo1, recall_modelo1, f1_modelo1 ),
-  Modelo_Opt = c(accuracy_modelo2, precision_modelo2, recall_modelo2, f1_modelo2),
+  Modelo_Default = c(accuracy_modelo1, precision_modelo1, recall_modelo1, f1_modelo1, AUC_VALUE1),
+  Modelo_Opt = c(accuracy_modelo2, precision_modelo2, recall_modelo2, f1_modelo2, AUC_VALUE2),
   Diferencia = c(accuracy_modelo2 - accuracy_modelo1, 
                  precision_modelo2 - precision_modelo1,
                  recall_modelo2 - recall_modelo1,
-                 f1_modelo2 - f1_modelo1)
+                 f1_modelo2 - f1_modelo1, 
+                 AUC_VALUE2 - AUC_VALUE1)
 )
 
-# Imprimir la tabla
-kable(metricas_comparativa1, caption = "Comparativa de hiperparámetros entre los modelos 1 y 2")
-# Imprimir la tabla
-kable(metricas_comparativa2, caption = "Comparativa de métricas entre los modelos 1 y 2")
-```
 
-Inicialmente, el árbol por defecto tenía un AUC-ROC de 0.9415207. Para encontrar la mejor opción dentro de todas las exploradas, se minimizó el valor de AUC-ROC explorando los siguientes rangos de los parámetros: max_depth (1 a 30), min_split (1 a 30) y minbucket (1 a 30), estableciendo además cp = 0 y xval = 0, como indicaba la consigna. Como resultado, se obtuvo un árbol con un AUC-ROC de 0.9636. Esta mejora de 0.02207 se debió a la reducción de min_split de 20 a 16 y de max_depth de 30 a 17, mientras que minbucket fue el único parámetro que aumentó, pasando de 7 a 21 en comparación con el modelo por defecto.
+kable(metricas_comparativa1, caption = "Comparativa de hiperparámetros entre los modelos 1 y 2")
+
+rownames(metricas_comparativa2) <- c("Accuracy", "Precision", "Recall", "F1 Score", "AUC")
+kable(metricas_comparativa2, caption = "Comparativa de métricas entre los modelos 1 y 2")
+
+```
+Para encontrar la mejor opción dentro de todas las exploradas, se minimizó el valor de AUC-ROC explorando los siguientes rangos de los parámetros: max_depth (1 a 30), min_split (1 a 30) y minbucket (1 a 30), estableciendo además cp = 0 y xval = 0, como indicaba la consigna. Como resultado, se obtuvo un árbol con un AUC-ROC de 0.9636 como se puede observar en la Tabla 3. Esta mejora de 0.02207 se debió a la reducción de maxdepth y al incremento de los otros dos parámetros. 
 
 En la Tabla 4 se observa que el nuevo modelo muestra una mejora en términos de accuracy, precisión y F1, aunque presenta una ligera disminución en recall. El F1 score experimenta una leve mejora, lo que sugiere un buen equilibrio entre precisión y recall. Sin embargo, el modelo pierde algo de capacidad para identificar los casos en los que sería adecuado otorgar un préstamo a una persona capaz de pagarlo. En otras palabras, esto podría traducirse en una pérdida de oportunidades y de ganancia para la empresa, ya que podría haberse beneficiado al otorgar el préstamo a una persona confiable. A pesar de la disminución en recall, el Modelo 2 sigue siendo generalmente superior, y dicha reducción no parece ser crítica dentro del contexto del problema.
 
@@ -589,16 +526,18 @@ rpart.plot(modelo2, main = "Árbol de Decisión", type = 2, extra = 104)
 
 ```
 
-En el primer modelo, el valor predeterminado de minsplit era 20, lo que implicaba que, para hacer una partición, el modelo requería al menos 20 observaciones por nodo. Esto hacía que fuera más exigente y dificultaba la creación de particiones cuando había menos de 20 observaciones en un nodo. En el segundo modelo, esta exigencia se redujo a 15, lo que facilita la creación de particiones con menos observaciones, permitiendo una mayor granularidad y, por lo tanto, un modelo más detallado.
+En el primer modelo, el valor predeterminado de minsplit era 20, lo que significaba que para realizar una partición, el modelo requería al menos 20 observaciones por nodo. En el segundo modelo, este valor se incrementó a 29, lo que hace que el modelo sea más exigente a la hora de crear particiones, ya que ahora se necesita un mayor número de observaciones para realizar cada división.
 
-En cuanto a la profundidad del árbol (maxdepth), el valor predeterminado de 30 era bastante alto. Aunque, al hacer las particiones, no era necesario que el árbol fuera tan profundo, y en el peor de los casos, el árbol solo alcanzaba una profundidad de 6 niveles. Sin embargo, en el segundo modelo, la profundidad máxima llegó a ser de 17 niveles, lo que indica que el modelo ahora es mucho más profundo y tiene más capacidad para capturar complejidades en los datos.
+En cuanto a la profundidad del árbol (maxdepth), el valor predeterminado de 30 era bastante alto. Sin embargo, al realizar las particiones, no era necesario que el árbol alcanzara una profundidad tan grande, ya que en la práctica la profundidad del árbol era mucho menor. Esto se puede observar en la Figura 3, donde el árbol solo alcanza una profundidad de 6 niveles. En el segundo modelo, la profundidad máxima alcanzó los 17 niveles, lo que indica que el modelo es ahora más profundo y tiene mayor capacidad para capturar las complejidades de los datos.
 
-Otro cambio relevante es el valor de minbucket, que en el modelo predeterminado estaba fijado en 7. Esto implicaba que cada hoja terminal del árbol debía tener al menos 7 observaciones. Este valor más alto resultaba en menos hojas, ya que el modelo agrupaba más observaciones en cada hoja. En el segundo modelo, al reducirse a 21, ahora es más probable que el modelo tenga más hojas, ya que cada hoja puede contener más divisiones con menos observaciones, lo que permite una mayor ramificación y más especificidad en las predicciones.Nos llama la atención que es un valor menor al de minsplit, eso no debería de suceder. 
+Otro cambio relevante es el valor de minbucket, que en el modelo predeterminado estaba fijado en 7. Este valor implicaba que cada hoja terminal del árbol debía contener al menos 7 observaciones. En el segundo modelo, al aumentar a 21, el número de hojas terminales se reduce, lo que disminuye la ramificación del árbol.
 
-Lo que notamos en el árbol resultante es que este ha aumentado considerablemente en tamaño. El modelo optimizado ahora tiene un árbol mucho más ramificado, lo que significa que ha aumentado la capacidad de aprendizaje. Este tipo de árbol es capaz de capturar patrones más complejos y matices en los datos, lo cual puede mejorar la precisión del modelo, pero también puede llevar a un mayor riesgo de sobreajuste si no se gestiona adecuadamente.
+Como resultado, se observa que el árbol generado por el modelo optimizado es considerablemente más grande y ramificado. Esto indica que el modelo tiene una mayor capacidad de aprendizaje, ya que es capaz de captar patrones más complejos y matices en los datos. Sin embargo, es importante señalar que este aumento en la complejidad también puede incrementar el riesgo de sobreajuste si no se controla adecuadamente.
 
-```{r, echo=FALSE,  warning=FALSE, message=FALSE}
-library(dplyr)
+\newpage
+
+```{r, echo=FALSE,  warning=FALSE, message=FALSE, fig.cap= "Impacto de max_depth, min_split y min_bucket sobre AUC" }
+
 library(stringr)
 
 range = seq(2, 30, by = 2)
@@ -659,7 +598,6 @@ ggplot(grafico, aes(x = value, y = auc, color = hiperparametro)) +
   scale_y_continuous(breaks = breaks_y, labels = format(breaks_y, nsmall = 4)) +  
   scale_x_continuous(breaks = breaks_x) +
  labs(
-    title = "Impacto de max_depth, min_split y min_bucket sobre AUC",
     x = "Valor del hiperparámetro",
     y = "AUC",
     color = "Hiperparámetro",
@@ -674,7 +612,8 @@ ggplot(grafico, aes(x = value, y = auc, color = hiperparametro)) +
 
 ```
 
-A partir del gráfico XX presentado, podemos analizar el impacto de los hiperparámetros max_depth, min_split y min_bucket en el desempeño del modelo, medido a través del área bajo la curva (AUC).
+
+A partir del gráfico 7 podemos analizar el impacto de los hiperparámetros max_depth, min_split y min_bucket en el desempeño del modelo, medido a través del área bajo la curva (AUC).
 
 En primer lugar, observamos que el hiperparámetro con mayor influencia en el AUC es max_depth. A medida que aumenta desde 2 hasta aproximadamente 10, el AUC experimenta un crecimiento significativo, evidenciado por una pendiente pronunciada en la curva correspondiente. A partir de un valor de max_depth = 10, el AUC se estabiliza y alcanza un valor óptimo (0.9636), manteniéndose constante incluso con valores más altos de max_depth (>=12). Este comportamiento sugiere que más allá de cierto punto, aumentar la profundidad del árbol no aporta beneficios adicionales en términos de AUC y podría incluso derivar en un sobreajuste si no se controla adecuadamente.
 
@@ -684,57 +623,54 @@ Un punto clave en el análisis ocurre alrededor de un valor de 16 para los tres 
 
 En conclusión, el análisis sugiere que max_depth es el hiperparámetro con mayor influencia en la mejora del modelo, mientras que min_bucket y min_split tienen un impacto más limitado. Esto permite inferir que, en términos de optimización, es fundamental ajustar max_depth con mayor precisión, mientras que los otros dos hiperparámetros pueden establecerse en valores moderados sin una pérdida significativa en la calidad del modelo.
 
-```{r, echo=FALSE,  warning=FALSE, message=FALSE}
 
-
+```{r, echo=FALSE,  warning=FALSE, message=FALSE, fig.cap= "Comparación de Importancia de Variables" }
 library(tibble)
-library(dplyr)
 
-#VI con modelo default
+imp_reescalada_d <- (tree$variable.importance) * 100 / max(tree$variable.importance)
+imp_reescalada_o <- (modelo2$variable.importance) * 100 / max(modelo2$variable.importance)
 
-imp_reescalada_d <- (tree$variable.importance)*100/max(tree$variable.importance)
-variables_d <- data.frame(variable = names(tree$variable.importance),
-                 imp = imp_reescalada_d)
+# Crear dataframes y agregar una columna indicando el modelo
+variables_d <- data.frame(variable = names(tree$variable.importance), 
+                          imp = imp_reescalada_d, 
+                          modelo = "Default")
 
-# Ordenar por importancia
-variables_d <- variables_d[order(variables_d$imp), ]
+variables_o <- data.frame(variable = names(modelo2$variable.importance), 
+                          imp = imp_reescalada_o, 
+                          modelo = "Optimizado")
 
-# Crear el gráfico
-ggplot(variables_d, aes(x = reorder(variable, imp), y = imp)) +
-  geom_bar(stat = "identity", fill = "#E07A5F", ) +
+# Unir ambos datasets
+variables_comb <- bind_rows(variables_d, variables_o)
+
+# Ordenar variables por importancia promedio para una mejor visualización
+variables_comb <- variables_comb %>%
+  group_by(variable) %>%
+  mutate(imp_promedio = mean(imp)) %>%
+  ungroup() %>%
+  arrange(imp_promedio)
+
+# Gráfico combinado
+ggplot(variables_comb, aes(x = reorder(variable, imp_promedio), y = imp, fill = modelo)) +
+  geom_bar(stat = "identity", position = "dodge") +  # Barra lado a lado para comparación
   coord_flip() +
   theme_minimal() +
-  labs(title = "Variable Importance del modelo default", x = NULL, y = "Variable Importance reescalada")
-
-
-#VI con modelo optimizado 
-imp_reescalada_o <- (modelo2$variable.importance)*100/max(modelo2$variable.importance)
-variables_o <- data.frame(variable = names(modelo2$variable.importance),
-                 imp = imp_reescalada_o)
-
-# Ordenar por importancia
-variables <- variables_o[order(variables_o$imp), ]
-
-# Crear el gráfico
-ggplot(variables_o , aes(x = reorder(variable, imp), y = imp)) +
-  geom_bar(stat = "identity", fill = "#6AA4C1", ) +
-  coord_flip() +
-  theme_minimal() +
-  labs(title = "Variable Importance del modelo optimizado", x = NULL, y = "Variable Importance reescalada")
-
+  scale_fill_manual(values = c("Default" = "#E07A5F", "Optimizado" = "#6AA4C1")) +
+  labs( x = NULL, y = "Importancia Reescalada") +
+  theme(legend.position = "top")
 ```
 
-En estos gráficos observamos que, tanto en el modelo original con los hiperparámetros por defecto como en el modelo optimizado, la importancia de las variables se mantiene igual. Destaca especialmente previous_loan_defaults_on_file, lo que indica que el historial de incumplimiento de préstamos anteriores es un factor clave en las predicciones. Además, la relación entre el monto del préstamo y los ingresos del solicitante, así como la tasa de interés, tienen un impacto significativo. Otros factores relevantes incluyen los ingresos personales, la propiedad de vivienda y el puntaje de crédito. Por otro lado, algunas variables, como el género y la educación, parecen tener poca influencia y podrían ser eliminadas para simplificar el modelo sin perder su precisión.
+
+Sumado a lo anterior, al observar el gráfico 8, podemos notar que tanto en el modelo original con los hiperparámetros por defecto como en el modelo optimizado, la importancia de las variables se mantiene prácticamente igual, en particular las más importantes. Se destaca especialmente previous_loan_defaults_on_file, lo que sugiere que el historial de incumplimiento de préstamos anteriores es un factor clave en las predicciones. Además, la relación entre el monto del préstamo, los ingresos del solicitante y la tasa de interés tiene un impacto significativo. Otros factores relevantes incluyen los ingresos personales, la propiedad de vivienda y el puntaje de crédito. En contraste, algunas variables, como el género y la educación, parecen tener poca influencia, por lo que podrían eliminarse para simplificar el modelo sin comprometer su precisión.
 
 
 \newpage
-
 # **7. Análisis del impacto de los valores faltantes** 
 
 
 En esta sección, se evalúa cómo la presencia de valores faltantes en las variables predictoras afecta el rendimiento de un modelo de clasificación basado en árboles de decisión. Para ello, tomamos el conjunto de datos original -que no tenía valores faltantes- e insertamos aleatoriamente valores faltantes para generar tres conjuntos de datos nuevos, cuyas proporciones de valores faltantes son: 20%, 50% y 75%. Estos conjuntos se aplicaron tanto al entrenamiento, validación como al testeo, manteniendo las mismas observaciones en cada versión para garantizar la consistencia del análisis.
 
 Se procedió a optimizar los hiperparámetros del árbol de decisión en cada caso, maximizando el AUC en el conjunto de validación con un algoritmo de grid search. Finalmente, se comparó el desempeño de cada modelo con el árbol optimizado previamente obtenido en el punto 5, evaluando cómo el aumento en la proporción de datos faltantes impacta en las métricas de rendimiento. Este análisis se complementa con gráficos que ilustran visualmente las diferencias entre los modelos.
+
 
 ```{r, echo=FALSE,  warning=FALSE, message=FALSE}
 ponerNA<- function(porcentaje, dataset){
@@ -816,16 +752,15 @@ metricas_comparativa_NA <- data.frame(
 rownames(metricas_comparativa_NA) <- c("Accuracy", "Precision", "Recall", "F1 Score", "AUC")
 
 # Imprimir la tabla
-kable(metricas_comparativa_NA, caption = "Comparativa de métricas entre los modelos con valores faltantes", format = "latex", booktabs = TRUE) 
+kable(metricas_comparativa_NA, caption = "Comparativa de métricas entre los modelos con valores faltantes", format = "latex", booktabs = TRUE, longtable = TRUE) 
+
+
  
 ```
 
 
 
-Grafico curvas ROC para los distintos modelos:
-
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.cap= "Comparación de Curvas ROC para Diferentes Modelos" }
 roccurve_modelo2<-metricas_modelo2[[5]]
 # Crear data frames con sensibilidades y especificidades para cada curva ROC
 roc_data_optimizado <- data.frame(
@@ -861,7 +796,6 @@ ggplot(roc_data, aes(x = 1 - specificity, y = sensitivity, color = modelo)) +
   labs(
     x = "False Positive Rate (1 - Specificity)",
     y = "True Positive Rate (Sensitivity)",
-    title = "Comparación de Curvas ROC para Diferentes Modelos",
     color = "Modelo"
   ) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray") + 
@@ -880,14 +814,23 @@ ggplot(roc_data, aes(x = 1 - specificity, y = sensitivity, color = modelo)) +
 ```
 
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+Como ya hemos mencionado, las curvas ROC y el AUC son herramientas clave para evaluar el rendimiento de un modelo de clasificación. El AUC mide la capacidad del modelo para discriminar entre clases, donde un valor más alto indica mejor rendimiento. En el gráfico, comparamos las curvas ROC de diferentes modelos con distintos porcentajes de valores faltantes (NA): el modelo optimizado, el modelo con 20%, 50%, y 75% de valores faltantes. A continuación analizaremos en detalle la Figura 9.
 
+El modelo optimizado, sin valores faltantes, tiene un AUC de 0.96, mostrando un rendimiento excelente. Esto significa que el modelo es capaz de distinguir entre las clases con una precisión bastante alta, lo que se refleja en la curva ROC que se sitúa en la parte superior izquierda del gráfico, cerca del eje de los verdaderos positivos.
+Con 20% de valores faltantes,  el rendimiento del modelo experimenta una caída, pero sigue siendo bastante bueno, con un AUC de 0.9. La curva ROC sigue estando por encima de la línea diagonal punteada (que indica un modelo aleatorio). Esto muestra que, aunque los valores faltantes tienen un impacto en la capacidad del modelo para discriminar entre las clases, el modelo sigue teniendo una buena performance.
+
+A medida que los valores faltantes aumentan al 50%, el rendimiento del modelo disminuye notablemente, con un AUC de 0.8. La curva ROC se desplaza hacia la parte central del gráfico, indicando que el modelo tiene más dificultad para discriminar entre las clases.  Hay una la pérdida en rendimiento y por lo tanto, una pérdida significativa de precisión de las predicciones.
+
+Finalmente, cuando el modelo se enfrenta a un 75% de valores faltantes, la performance se reduce aún más, con un AUC de 0.7. En este caso, la curva ROC se encuentra más cerca de la línea diagonal punteada, lo que indica que el modelo está haciendo predicciones casi aleatorias. La discriminación entre las clases se ha vuelto mucho más difícil debido a la falta masiva de datos, lo que resalta la importancia de manejar adecuadamente los valores faltantes para mantener la capacidad predictiva de un modelo.
+
+
+De esta manera podemos interpretar que es muy importante  manejar los valores faltantes en el conjunto de datos, ya que tener muchos valores faltantes puede afectar mucho la capacidad del modelo para hacer predicciones precisas y confiables.
+
+\newpage
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE,  fig.cap= "Desempeño Relativo respecto al Modelo Optimizado" }
 
 library(tidyr)
-library(tibble)
-
-
-
 
 # Crear el dataframe de las métricas comparativas con las métricas para cada modelo
 metricas_comparativa_NA <- data.frame(
@@ -914,8 +857,7 @@ df_long <- metricas_comparativa_NA %>%
 ggplot(df_long, aes(x = Métrica, y = Proporción, fill = Modelo)) +
   geom_bar(stat = "identity",position = position_dodge(width = 0.5), width = 0.4) +
   ylim(0, 1.05) +  # Ajusta el límite superior para que no sobrepase 1
-  labs(title = "Desempeño Relativo respecto al Modelo Optimizado",
-       x = "Métrica",
+  labs(x = "Métrica",
        y = "Proporción de Desempeño") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -924,9 +866,18 @@ ggplot(df_long, aes(x = Métrica, y = Proporción, fill = Modelo)) +
 ```
 
 
-En el gráfico se compara el desempeño de los modelos con diferentes porcentajes de valores faltantes (20%, 50%, 75%) en relación con el modelo optimizado. La división entre los modelos refleja la proporción de desempeño de cada modelo en comparación con el optimizado, lo que permite observar cómo se ve afectado el rendimiento conforme aumenta el porcentaje de valores faltantes.
+En la Figura 10 se compara el desempeño de los modelos con diferentes porcentajes de valores faltantes (20%, 50%, 75%) en relación con el modelo optimizado. La división entre los modelos refleja la proporción de desempeño de cada modelo en comparación con el optimizado, lo que permite observar cómo se ve afectado el rendimiento conforme aumenta el porcentaje de valores faltantes -siendo 1 el valor óptimo-.
 
 Un patrón claro es que todas las métricas, excepto recall, disminuyen conforme se incrementa el porcentaje de valores faltantes. Esto es consistente con lo que muestra el gráfico de AUC: a medida que aumenta el porcentaje de valores faltantes, el rendimiento de cada métrica (accuracy, precision, F1 score, AUC) empeora, siendo más pronunciada esta caída a medida que nos acercamos al 75% de valores faltantes. En cambio, recall muestra un comportamiento diferente: en el modelo optimizado, tiene un valor de 0.960, pero mejora en los modelos con 50% (0.9636) y 75% (0.9658) de valores faltantes. Este patrón sugiere que, aunque el modelo pierde precisión en otras métricas, se vuelve más efectivo para identificar los casos positivos cuando la proporción de valores faltantes aumenta.
+
 A partir del análisis del gráfico anterior, donde observamos que a mayor cantidad de valores faltantes (NA), el rendimiento del modelo disminuye, en este gráfico podemos ver de manera más detallada el impacto en cada métrica individual. Concluimos que accuracy, precision, F1 score y AUC disminuyen conforme aumenta el porcentaje de valores faltantes, lo que indica una pérdida en la capacidad del modelo para discriminar entre las clases. Sin embargo, recall muestra un comportamiento interesante: mejora en los modelos con 50% y 75% de valores faltantes. Esto sugiere que, aunque el modelo pierde precisión en otras métricas, sigue siendo eficaz para identificar los casos positivos, e incluso, en algunos casos, mejora en esta capacidad a pesar del aumento de los valores faltantes.
+
+# **Conclusión**
+
+El análisis realizado muestra que el árbol de decisión es una herramienta eficaz para predecir la aprobación o rechazo de préstamos en función de diversas características de los solicitantes. Se observó que en este conjunto de datos el hiperparámetro con mayor impacto en el rendimiento del modelo es max_depth, mientras que min_split y min_bucket tienen una influencia menor. Ajustar estos hiperparámetros de manera adecuada permitió optimizar el modelo, logrando mejoras en las métricas de evaluación, especialmente en el AUC, que pasó de 0.9415 a 0.9680. Además, se identificaron las variables más relevantes para la toma de decisiones, destacando el historial de incumplimientos de préstamos previos, la relación entre el monto del préstamo y los ingresos, y la tasa de interés. También se analizó el impacto de valores faltantes en el rendimiento del modelo, evidenciando que a partir de un 50% de valores faltantes, la capacidad predictiva se ve afectada de manera significativa.
+
+El árbol de decisión resultó ser un modelo confiable para este problema, ya que mantuvo un buen nivel de precisión y permitió entender fácilmente cómo llegaba a sus decisiones, sin volverse demasiado complejo. A pesar de que la optimización de hiperparámetros mejoró el desempeño, la estructura del modelo predeterminado ya ofrecía una clasificación razonablemente precisa. Sin embargo, se evidenció que, en presencia de valores faltantes elevados, el modelo pierde fiabilidad, lo que resalta la importancia de estrategias adecuadas para el manejo de datos incompletos.
+
+Para mejorar aún más el análisis, podría explorarse la implementación de otros modelos de clasificación como random forests o gradient boosting, que podrían ofrecer un mejor equilibrio entre rendimiento y robustez ante valores faltantes. Además, podría evaluarse el impacto de la eliminación de variables poco influyentes, como género y nivel educativo, para simplificar el modelo sin comprometer su eficacia. Finalmente, una dirección interesante sería la aplicación de técnicas avanzadas de imputación de valores faltantes para minimizar la pérdida de información y mejorar la estabilidad del modelo ante conjuntos de datos incompletos.
 
 
